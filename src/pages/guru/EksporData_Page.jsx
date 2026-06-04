@@ -126,7 +126,7 @@ export default function EksporData_Page() {
     {
       id: 'rapor',
       title: 'Data nilai rapor siswa',
-      description: 'Semua nilai per mata pelajaran semester 1–5 dalam format spreadsheet.',
+      description: 'Semua nilai per mata pelajaran semester 1–4 dalam format spreadsheet.',
       btnLabel: 'Ekspor Excel',
       format: 'Excel',
       formatClass: 'fmt-excel',

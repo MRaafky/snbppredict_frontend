@@ -14,30 +14,28 @@ function StatistikSNBP_Page() {
     // ── Data Statistik ────────────────────────────────────────────────
     const statCards = [
         { label: 'Total Siswa Kelas XII', value: '216', sub: '6 kelas paralel', color: 'blue' },
-        { label: 'On Track', value: '142', sub: '65.7% dari total', color: 'green' },
+        { label: 'Aman', value: '185', sub: '85.6% dari total', color: 'green' },
         { label: 'Siswa Berisiko', value: '31', sub: '14.4% dari total', color: 'red' },
     ];
 
     const distribusiData = [
-        { label: 'Siap (>70%)', count: 142, pct: 65.7, color: '#16a34a' },
-        { label: 'Perhatian (50–70%)', count: 43, pct: 19.9, color: '#f59e0b' },
-        { label: 'Berisiko (<50%)', count: 31, pct: 14.4, color: '#dc2626' },
+        { label: 'Aman', count: 185, pct: 85.6, color: '#16a34a' },
+        { label: 'Berisiko', count: 31, pct: 14.4, color: '#dc2626' },
     ];
 
     const kelasPerforma = [
-        { kelas: 'XII IPA 1', lolos: 22, total: 36, pct: 61, trend: '+3' },
-        { kelas: 'XII IPA 2', lolos: 25, total: 36, pct: 69, trend: '+5' },
-        { kelas: 'XII IPA 3', lolos: 20, total: 36, pct: 56, trend: '+1' },
-        { kelas: 'XII IPS 1', lolos: 18, total: 36, pct: 50, trend: '-2' },
-        { kelas: 'XII IPS 2', lolos: 21, total: 36, pct: 58, trend: '+4' },
-        { kelas: 'XII Bahasa', lolos: 16, total: 31, pct: 52, trend: '+2' },
+        { kelas: 'XII IPA 1', aman: 31, total: 36, pct: 86, trend: '+3' },
+        { kelas: 'XII IPA 2', aman: 32, total: 36, pct: 89, trend: '+5' },
+        { kelas: 'XII IPA 3', aman: 30, total: 36, pct: 83, trend: '+1' },
+        { kelas: 'XII IPS 1', aman: 29, total: 36, pct: 81, trend: '-2' },
+        { kelas: 'XII IPS 2', aman: 30, total: 36, pct: 83, trend: '+4' },
+        { kelas: 'XII Bahasa', aman: 33, total: 36, pct: 92, trend: '+2' },
     ];
 
 
 
     const getPctStyle = (pct) => {
-        if (pct >= 65) return { background: '#e8f5e9', color: '#2e7d32' };
-        if (pct >= 50) return { background: '#fff8e1', color: '#f59e0b' };
+        if (pct >= 85) return { background: '#e8f5e9', color: '#2e7d32' };
         return { background: '#fdecea', color: '#c62828' };
     };
 
@@ -199,7 +197,7 @@ function StatistikSNBP_Page() {
                                 {/* Performa Per Kelas */}
                                 <section className="snbs-card">
                                     <div className="snbs-card-header">
-                                        <h3 className="snbs-card-title">Performa prediksi per kelas</h3>
+                                        <h3 className="snbs-card-title">Performa kesiapan per kelas</h3>
                                         <span className="snbs-badge-blue">6 Kelas</span>
                                     </div>
                                     <div className="snbs-table-wrapper">
@@ -207,9 +205,9 @@ function StatistikSNBP_Page() {
                                             <thead>
                                                 <tr>
                                                     <th>Kelas</th>
-                                                    <th>Lolos</th>
+                                                    <th>Aman</th>
                                                     <th>Total</th>
-                                                    <th>%</th>
+                                                    <th>% Aman</th>
                                                     <th>Tren</th>
                                                 </tr>
                                             </thead>
@@ -217,7 +215,7 @@ function StatistikSNBP_Page() {
                                                 {kelasPerforma.map((row) => (
                                                     <tr key={row.kelas}>
                                                         <td className="snbs-td-bold">{row.kelas}</td>
-                                                        <td>{row.lolos}</td>
+                                                        <td>{row.aman}</td>
                                                         <td className="snbs-td-muted">{row.total}</td>
                                                         <td>
                                                             <span className="snbs-pct-badge" style={getPctStyle(row.pct)}>
@@ -241,7 +239,7 @@ function StatistikSNBP_Page() {
 
                                     {/* Bar Chart Mini */}
                                     <section className="snbs-card">
-                                        <h3 className="snbs-card-title">Prediksi lolos per kelas</h3>
+                                        <h3 className="snbs-card-title">Kesiapan per kelas</h3>
                                         <div className="snbs-bar-chart">
                                             {kelasPerforma.map((row) => (
                                                 <div key={row.kelas} className="snbs-bar-row">
@@ -251,9 +249,7 @@ function StatistikSNBP_Page() {
                                                             className="snbs-bar-fill"
                                                             style={{
                                                                 width: `${row.pct}%`,
-                                                                background: row.pct >= 65
-                                                                    ? '#16a34a'
-                                                                    : row.pct >= 50 ? '#f59e0b' : '#dc2626',
+                                                                background: row.pct >= 85 ? '#16a34a' : '#dc2626',
                                                             }}
                                                         />
                                                     </div>
@@ -269,15 +265,15 @@ function StatistikSNBP_Page() {
                                         <div className="snbs-summary-list">
                                             <div className="snbs-summary-row">
                                                 <span className="snbs-summary-label">Kelas terbaik</span>
-                                                <span className="snbs-summary-val snbs-val-green">XII IPA 2 (69%)</span>
+                                                <span className="snbs-summary-val snbs-val-green">XII Bahasa (92% Aman)</span>
                                             </div>
                                             <div className="snbs-summary-row">
                                                 <span className="snbs-summary-label">Kelas perlu intervensi</span>
-                                                <span className="snbs-summary-val snbs-val-red">XII IPS 1 (50%)</span>
+                                                <span className="snbs-summary-val snbs-val-red">XII IPS 1 (81% Aman)</span>
                                             </div>
                                             <div className="snbs-summary-row">
-                                                <span className="snbs-summary-label">Rata-rata prediksi</span>
-                                                <span className="snbs-summary-val">57.7%</span>
+                                                <span className="snbs-summary-label">Rata-rata kesiapan</span>
+                                                <span className="snbs-summary-val">85.6%</span>
                                             </div>
                                             <div className="snbs-summary-row">
                                                 <span className="snbs-summary-label">Update terakhir</span>

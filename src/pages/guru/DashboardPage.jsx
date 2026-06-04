@@ -35,8 +35,8 @@ const statCards = [
   },
   {
     id: 'prediksi',
-    label: 'On Track',
-    value: '27',
+    label: 'Aman',
+    value: '19',
     sub: '↑ 3 dari bulan lalu',
     subColor: '#16a34a',
     accent: '#16a34a',
@@ -44,7 +44,7 @@ const statCards = [
   {
     id: 'perhatian',
     label: 'Berisiko',
-    value: '9',
+    value: '17',
     sub: 'Intervensi diperlukan',
     subColor: '#dc2626',
     accent: '#dc2626',
@@ -213,8 +213,8 @@ function StatCard({ label, value, sub, subColor, accent }) {
 
 function StatusPanel() {
   const total = 36;
-  const siap = 27;
-  const berisiko = 9;
+  const siap = 19;
+  const berisiko = 17;
 
   return (
     <div className="db-card db-status-panel">
@@ -226,7 +226,7 @@ function StatusPanel() {
       <div className="db-status-buckets" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
         <div className="db-bucket db-bucket-green">
           <span className="db-bucket-num">{siap}</span>
-          <span className="db-bucket-label">Siap</span>
+          <span className="db-bucket-label">Aman</span>
         </div>
         <div className="db-bucket db-bucket-red">
           <span className="db-bucket-num">{berisiko}</span>
@@ -236,8 +236,8 @@ function StatusPanel() {
 
       <div className="db-progress-list">
         {[
-          { label: 'Siap', pct: 75, count: siap, color: '#22c55e' },
-          { label: 'Berisiko', pct: 25, count: berisiko, color: '#ef4444' },
+          { label: 'Aman', pct: 54, count: siap, color: '#22c55e' },
+          { label: 'Berisiko', pct: 46, count: berisiko, color: '#ef4444' },
         ].map((row) => (
           <div key={row.label} className="db-progress-row">
             <span className="db-progress-label">
@@ -316,7 +316,6 @@ function RiskTable() {
             <tr>
               <th>Nama</th>
               <th>Rata-rata nilai</th>
-              <th>Prediksi lolos</th>
               <th>Kehadiran</th>
               <th>Status</th>
             </tr>
@@ -326,9 +325,6 @@ function RiskTable() {
               <tr key={s.id}>
                 <td className="db-td-name">{s.name}</td>
                 <td>{s.avg}</td>
-                <td style={{ color: predictColor(s.predict), fontWeight: 600 }}>
-                  {s.predict}%
-                </td>
                 <td>{s.attendance}%</td>
                 <td>{statusBadge(s.status)}</td>
               </tr>

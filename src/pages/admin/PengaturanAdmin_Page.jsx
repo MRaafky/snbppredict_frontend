@@ -12,8 +12,7 @@ function PengaturanAdmin_Page() {
     };
 
     const infoSistem = [
-        { label: 'Model AI aktif',       value: 'Gradient Boosting v2.1', valueClass: 'pga-val-bold'  },
-        { label: 'Akurasi model',        value: '87.3%',                  valueClass: 'pga-val-green' },
+        { label: 'Model AI aktif',       value: 'Neural Network',         valueClass: 'pga-val-bold'  },
         { label: 'Update terakhir',      value: '1 Mei 2026',             valueClass: 'pga-val-bold'  },
         { label: 'Versi aplikasi',       value: 'v1.4.2',                 valueClass: 'pga-val-bold'  },
         { label: 'Total pengguna aktif', value: '41',                     valueClass: 'pga-val-bold'  },

@@ -12,12 +12,12 @@ function NilaiRapor_Page() {
 
   // Data nilai siswa
   const grades = [
-    { subject: 'Matematika',      score: 62, kkm: 75, status: 'Remedial' },
-    { subject: 'Bahasa Indonesia', score: 58, kkm: 75, status: 'Remedial' },
-    { subject: 'Biologi',          score: 60, kkm: 75, status: 'Remedial' },
-    { subject: 'Kimia',            score: 56, kkm: 75, status: 'Remedial' },
-    { subject: 'Fisika',           score: 65, kkm: 75, status: 'Remedial' },
-    { subject: 'Bahasa Inggris',   score: 56, kkm: 75, status: 'Remedial' },
+    { subject: 'Matematika',      score: 62, prevScore: 65, status: 'Berisiko' },
+    { subject: 'Bahasa Indonesia', score: 58, prevScore: 60, status: 'Berisiko' },
+    { subject: 'Biologi',          score: 60, prevScore: 58, status: 'Aman' },
+    { subject: 'Kimia',            score: 56, prevScore: 62, status: 'Berisiko' },
+    { subject: 'Fisika',           score: 65, prevScore: 68, status: 'Berisiko' },
+    { subject: 'Bahasa Inggris',   score: 56, prevScore: 54, status: 'Aman' },
   ];
 
   // Data tren nilai per semester
@@ -191,8 +191,8 @@ function NilaiRapor_Page() {
                   <thead>
                     <tr>
                       <th>Mata Pelajaran</th>
-                      <th>Nilai</th>
-                      <th>KKM</th>
+                      <th>Nilai (Sem. 5)</th>
+                      <th>Sem. Lalu (Sem. 4)</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -200,10 +200,10 @@ function NilaiRapor_Page() {
                     {grades.map((item, i) => (
                       <tr key={i}>
                         <td>{item.subject}</td>
-                        <td className="score-val">{item.score}</td>
-                        <td>{item.kkm}</td>
+                        <td className={`score-val ${item.status.toLowerCase()}`}>{item.score}</td>
+                        <td>{item.prevScore}</td>
                         <td>
-                          <span className="nr-status-badge remedial">
+                          <span className={`nr-status-badge ${item.status.toLowerCase()}`}>
                             {item.status}
                           </span>
                         </td>
@@ -222,11 +222,13 @@ function NilaiRapor_Page() {
                 <div className="nr-bars">
                   {trendData.map((item) => (
                     <div key={item.sem} className="nr-bar-wrapper">
-                      <div
-                        className="nr-bar"
-                        style={{ height: `${(item.value / maxValue) * 100}%` }}
-                      >
-                        {item.value}
+                      <div className="nr-bar-container">
+                        <div
+                          className="nr-bar"
+                          style={{ height: `${(item.value / maxValue) * 100}%` }}
+                        >
+                          {item.value}
+                        </div>
                       </div>
                       <span className="nr-bar-label">{item.sem}</span>
                     </div>

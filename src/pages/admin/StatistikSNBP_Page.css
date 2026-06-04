@@ -586,8 +586,7 @@
   height: 110px;
   border-radius: 50%;
   background: conic-gradient(
-    #16a34a 0deg 236deg,
-    #f59e0b 236deg 308deg,
+    #16a34a 0deg 308deg,
     #dc2626 308deg 360deg
   );
   display: flex;

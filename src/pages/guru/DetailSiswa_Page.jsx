@@ -178,9 +178,7 @@ const DetailSiswa_Page = () => {
               </div>
             </div>
             <div className="sdh-right">
-              <span className="sdh-pred-label">Prediksi lolos</span>
-              <span className="sdh-pred-val">{student.prediction}</span>
-              <span className="sdh-pred-badge">{student.status}</span>
+              <span className="sdh-pred-badge" style={{ fontSize: '13px', padding: '6px 16px' }}>{student.status}</span>
             </div>
           </div>
 
@@ -228,13 +226,9 @@ const DetailSiswa_Page = () => {
                     <span className="ds-label">Kehadiran</span>
                     <span className="ds-val" style={{ color: '#ef4444', fontWeight: 600 }}>{student.attendance}</span>
                   </div>
-                  <div className="detail-stat-row">
+                  <div className="detail-stat-row" style={{ borderBottom: 'none' }}>
                     <span className="ds-label">Ekstrakurikuler</span>
                     <span className="ds-val">{student.extracurricular}</span>
-                  </div>
-                  <div className="detail-stat-row" style={{ borderBottom: 'none' }}>
-                    <span className="ds-label">Prediksi lolos</span>
-                    <span className="ds-val" style={{ color: '#ef4444', fontWeight: 600 }}>{student.prediction}</span>
                   </div>
                 </div>
               </div>

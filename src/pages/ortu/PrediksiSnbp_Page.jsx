@@ -10,6 +10,15 @@ function PrediksiSnbp_Page() {
 
 
 
+    // Data perkembangan studi siswa
+    const subjects = [
+        { name: 'Matematika', score: 62, color: '#A32D2D' },
+        { name: 'Bahasa Indonesia', score: 58, color: '#A32D2D' },
+        { name: 'Biologi', score: 60, color: '#A32D2D' },
+        { name: 'Kimia', score: 56, color: '#A32D2D' },
+        { name: 'Fisika', score: 65, color: '#ff9f1c' },
+    ];
+
     // Rekomendasi aksi untuk orang tua
     const actions = [
         {
@@ -149,44 +158,100 @@ function PrediksiSnbp_Page() {
                 <main className="ps-content">
                     <div className="ps-grid">
 
-                        {/* ===== KIRI: Prediksi Card ===== */}
-                        <section className="ps-card">
+                        {/* ===== KIRI: Kolom Prediksi & Performa ===== */}
+                        <div className="ps-left-col">
 
-                            {/* Gauge + Status */}
-                            <div className="ps-gauge-row">
+                            {/* Card 1: Prediksi & Evaluasi */}
+                            <section className="ps-card">
 
-                                {/* SVG Donut */}
-                                <div className="ps-donut-wrap">
-                                    <svg className="ps-donut-svg" viewBox="0 0 120 120">
-                                        <circle className="ps-donut-bg" cx="60" cy="60" r="46" />
-                                        <circle
-                                            className="ps-donut-fill"
-                                            cx="60" cy="60" r="46"
-                                            strokeDasharray={CIRC}
-                                            strokeDashoffset={offset}
-                                        />
-                                    </svg>
-                                    <div className="ps-donut-label">
-                                        <span className="ps-donut-pct">{pct}%</span>
-                                        <span className="ps-donut-text">peluang lolos</span>
+                                {/* Gauge + Status */}
+                                <div className="ps-gauge-row">
+
+                                    {/* SVG Donut */}
+                                    <div className="ps-donut-wrap">
+                                        <svg className="ps-donut-svg" viewBox="0 0 120 120">
+                                            <circle className="ps-donut-bg" cx="60" cy="60" r="46" />
+                                            <circle
+                                                className="ps-donut-fill"
+                                                cx="60" cy="60" r="46"
+                                                strokeDasharray={CIRC}
+                                                strokeDashoffset={offset}
+                                            />
+                                        </svg>
+                                        <div className="ps-donut-label">
+                                            <span className="ps-donut-pct">{pct}%</span>
+                                            <span className="ps-donut-text">peluang lolos</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Status Text */}
+                                    <div className="ps-status-block">
+                                        <h3 className="ps-status-title">Status: Berisiko</h3>
+                                        <p className="ps-status-desc">
+                                            Prediksi AI berdasarkan nilai rapor semester 1–4, kehadiran, dan faktor akademik lainnya.
+                                        </p>
+                                        <div className="ps-status-tags">
+                                            <span className="ps-tag red">Nilai rendah</span>
+                                            <span className="ps-tag red">Kehadiran rendah</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Status Text */}
-                                <div className="ps-status-block">
-                                    <h3 className="ps-status-title">Status: Berisiko</h3>
-                                    <p className="ps-status-desc">
-                                        Prediksi AI berdasarkan nilai rapor semester 1–5, kehadiran, dan faktor akademik lainnya.
-                                    </p>
-                                    <div className="ps-status-tags">
-                                        <span className="ps-tag red">Nilai rendah</span>
-                                        <span className="ps-tag red">Kehadiran rendah</span>
+                                {/* Divider */}
+                                <div className="ps-divider"></div>
+
+                                {/* Faktor Performa Evaluasi */}
+                                <div className="ps-factors-section">
+                                    <h4 className="ps-factors-title">Faktor Evaluasi Performa</h4>
+                                    <div className="ps-factor-list">
+                                        <div className="ps-factor-row">
+                                            <span className="ps-factor-name">Rata-rata Nilai Rapor</span>
+                                            <span className="ps-factor-val red">58.1</span>
+                                        </div>
+                                        <div className="ps-factor-row">
+                                            <span className="ps-factor-name">Kehadiran Kelas</span>
+                                            <span className="ps-factor-val red">72%</span>
+                                        </div>
+                                        <div className="ps-factor-row">
+                                            <span className="ps-factor-name">Poin Ekstrakurikuler</span>
+                                            <span className="ps-factor-val muted">—</span>
+                                        </div>
+                                        <div className="ps-factor-row">
+                                            <span className="ps-factor-name">Kesesuaian Pilihan Prodi</span>
+                                            <span className="ps-factor-val">Sesuai (Akuntansi - UPN Yogyakarta)</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
+                            </section>
 
-                        </section>
+                            {/* Card 2: Detail Nilai Rapor */}
+                            <section className="ps-card">
+                                <div className="ps-card-header">
+                                    <h3 className="ps-card-title">Nilai Rapor per Mata Pelajaran</h3>
+                                    <span className="ps-semester-badge">Semester 5</span>
+                                </div>
+
+                                <div className="ps-subject-list">
+                                    {subjects.map((sub) => (
+                                        <div key={sub.name} className="ps-subject-row">
+                                            <span className="ps-subject-name">{sub.name}</span>
+                                            <div className="ps-progress-track">
+                                                <div
+                                                    className="ps-progress-fill"
+                                                    style={{ width: `${sub.score}%`, backgroundColor: sub.color }}
+                                                />
+                                            </div>
+                                            <span className="ps-progress-score">{sub.score}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="ps-kkm-note">
+                                    * Catatan: Status berisiko ditentukan dari penurunan nilai dibandingkan dengan semester sebelumnya (Semester 4), bukan berdasarkan KKM.
+                                </div>
+                            </section>
+                        </div>
 
                         {/* ===== KANAN: Aksi Card ===== */}
                         <section className="ps-card">

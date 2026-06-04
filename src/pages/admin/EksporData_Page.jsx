@@ -154,7 +154,7 @@ function EksporData_Page() {
                                     <div>
                                         <h3 className="ekd-card-title">Laporan kesiapan SNBP</h3>
                                         <p className="ekd-card-desc">
-                                            Ringkasan status kesiapan, prediksi, dan rekomendasi per kelas.
+                                            Ringkasan status kesiapan dan rekomendasi per kelas.
                                         </p>
                                     </div>
                                     <span className="ekd-badge ekd-badge-pdf">PDF</span>
@@ -178,7 +178,7 @@ function EksporData_Page() {
                                     <div>
                                         <h3 className="ekd-card-title">Data nilai seluruh siswa</h3>
                                         <p className="ekd-card-desc">
-                                            Semua nilai per mata pelajaran semester 1–5 dalam format spreadsheet.
+                                            Semua nilai per mata pelajaran semester 1–4 dalam format spreadsheet.
                                         </p>
                                     </div>
                                     <span className="ekd-badge ekd-badge-excel">Excel</span>

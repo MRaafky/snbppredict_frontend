@@ -12,19 +12,13 @@ function DashboardSekolah_Page() {
 
     // Data rekap per kelas
     const kelasData = [
-        { kelas: 'XII IPA 1', wali: 'Ibu Sari R.', siap: 22, perhatian: 9, berisiko: 5, prediksi: 61, color: '#185FA5' },
-        { kelas: 'XII IPA 2', wali: 'Bp. Andi W.', siap: 25, perhatian: 7, berisiko: 4, prediksi: 69, color: '#185FA5' },
-        { kelas: 'XII IPA 3', wali: 'Ibu Dewi K.', siap: 20, perhatian: 10, berisiko: 6, prediksi: 56, color: '#185FA5' },
-        { kelas: 'XII IPS 1', wali: 'Bp. Rudi S.', siap: 18, perhatian: 11, berisiko: 7, prediksi: 50, color: '#f59e0b' },
-        { kelas: 'XII IPS 2', wali: 'Ibu Lestari', siap: 21, perhatian: 9, berisiko: 6, prediksi: 58, color: '#f59e0b' },
-        { kelas: 'XII Bahasa', wali: 'Ibu Ratna M.', siap: 16, perhatian: 12, berisiko: 3, prediksi: 52, color: '#94a3b8' },
+        { kelas: 'XII IPA 1', wali: 'Ibu Sari R.', aman: 31, berisiko: 5, avgScore: 82.4, color: '#185FA5' },
+        { kelas: 'XII IPA 2', wali: 'Bp. Andi W.', aman: 32, berisiko: 4, avgScore: 85.3, color: '#185FA5' },
+        { kelas: 'XII IPA 3', wali: 'Ibu Dewi K.', aman: 30, berisiko: 6, avgScore: 81.1, color: '#185FA5' },
+        { kelas: 'XII IPS 1', wali: 'Bp. Rudi S.', aman: 29, berisiko: 7, avgScore: 78.5, color: '#f59e0b' },
+        { kelas: 'XII IPS 2', wali: 'Ibu Lestari', aman: 30, berisiko: 6, avgScore: 79.8, color: '#f59e0b' },
+        { kelas: 'XII Bahasa', wali: 'Ibu Ratna M.', aman: 33, berisiko: 3, avgScore: 76.2, color: '#94a3b8' },
     ];
-
-    const getPrediksiStyle = (val) => {
-        if (val >= 65) return { background: '#e8f5e9', color: '#2e7d32' };
-        if (val >= 55) return { background: '#fff8e1', color: '#f59e0b' };
-        return { background: '#fdecea', color: '#c62828' };
-    };
 
     return (
         <div className="dbs-container">
@@ -147,8 +141,8 @@ function DashboardSekolah_Page() {
                         </div>
 
                         <div className="dbs-stat-card">
-                            <span className="dbs-stat-label">On track</span>
-                            <div className="dbs-stat-value dbs-val-green">142</div>
+                            <span className="dbs-stat-label">Aman</span>
+                            <div className="dbs-stat-value dbs-val-green">185</div>
                         </div>
 
                         <div className="dbs-stat-card">
@@ -175,9 +169,8 @@ function DashboardSekolah_Page() {
                                         <tr>
                                             <th>Kelas</th>
                                             <th>Wali Kelas</th>
-                                            <th>Siap</th>
+                                            <th>Aman</th>
                                             <th className="dbs-th-berisiko">Berisiko</th>
-                                            <th>Prediksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -185,16 +178,8 @@ function DashboardSekolah_Page() {
                                             <tr key={row.kelas}>
                                                 <td className="dbs-td-kelas">{row.kelas}</td>
                                                 <td>{row.wali}</td>
-                                                <td>{row.siap}</td>
+                                                <td>{row.aman}</td>
                                                 <td className="dbs-td-berisiko">{row.berisiko}</td>
-                                                <td>
-                                                    <span
-                                                        className="dbs-prediksi-badge"
-                                                        style={getPrediksiStyle(row.prediksi)}
-                                                    >
-                                                        {row.prediksi}%
-                                                    </span>
-                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -210,8 +195,8 @@ function DashboardSekolah_Page() {
                                 <h3 className="dbs-card-title">Ringkasan sekolah</h3>
                                 <div className="dbs-summary-list">
                                     <div className="dbs-summary-row">
-                                        <span className="dbs-summary-label">On track</span>
-                                        <span className="dbs-summary-val dbs-val-green">142 / 216</span>
+                                        <span className="dbs-summary-label">Aman</span>
+                                        <span className="dbs-summary-val dbs-val-green">185 / 216</span>
                                     </div>
                                     <div className="dbs-summary-row">
                                         <span className="dbs-summary-label">Rata-rata nilai</span>
@@ -252,19 +237,20 @@ function DashboardSekolah_Page() {
                     </div>
 
                     {/* === BAR CHART: Perbandingan Prediksi === */}
+                    {/* === BAR CHART: Perbandingan Nilai Rapor === */}
                     <section className="dbs-card dbs-chart-card">
-                        <h3 className="dbs-card-title">Perbandingan prediksi lolos antar kelas</h3>
+                        <h3 className="dbs-card-title">Perbandingan rata-rata nilai rapor antar kelas</h3>
                         <div className="dbs-chart-area">
                             {kelasData.map((row) => (
                                 <div key={row.kelas} className="dbs-bar-wrapper">
                                     <div
                                         className="dbs-bar"
                                         style={{
-                                            height: `${row.prediksi * 2.2}px`,
+                                            height: `${row.avgScore * 2.2}px`,
                                             backgroundColor: row.color,
                                         }}
                                     >
-                                        <span className="dbs-bar-pct">{row.prediksi}%</span>
+                                        <span className="dbs-bar-pct">{row.avgScore}</span>
                                     </div>
                                     <span className="dbs-bar-label">{row.kelas}</span>
                                 </div>

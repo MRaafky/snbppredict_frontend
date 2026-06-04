@@ -11,22 +11,16 @@ function RekapKelas_Page() {
     };
 
     const kelasData = [
-        { kelas: 'XII IPA 1', labelPendek: 'XII IPA 1', wali: 'Ibu Sari Rahayu', total: 36, siap: 22, perhatian: 9, berisiko: 5, prediksi: 61, barColor: '#1d4ed8' },
-        { kelas: 'XII IPA 2', labelPendek: 'XII IPA 2', wali: 'Bp. Andi Wijaya', total: 36, siap: 25, perhatian: 7, berisiko: 4, prediksi: 69, barColor: '#1e3a8a' },
-        { kelas: 'XII IPA 3', labelPendek: 'XII IPA 3', wali: 'Ibu Dewi Kartika', total: 36, siap: 20, perhatian: 10, berisiko: 6, prediksi: 56, barColor: '#3b82f6' },
-        { kelas: 'XII IPS 1', labelPendek: 'XII IPS 1', wali: 'Bp. Rudi Santoso', total: 36, siap: 18, perhatian: 11, berisiko: 7, prediksi: 50, barColor: '#f59e0b' },
-        { kelas: 'XII IPS 2', labelPendek: 'XII IPS 2', wali: 'Ibu Lestari W.', total: 36, siap: 21, perhatian: 9, berisiko: 6, prediksi: 58, barColor: '#d97706' },
-        { kelas: 'XII Bahasa', labelPendek: 'XII Bhs', wali: 'Ibu Ratna Mulia', total: 31, siap: 16, perhatian: 12, berisiko: 3, prediksi: 52, barColor: '#9ca3af' },
+        { kelas: 'XII IPA 1', labelPendek: 'XII IPA 1', wali: 'Ibu Sari Rahayu', total: 36, aman: 31, berisiko: 5, avgScore: 82.4, barColor: '#1d4ed8' },
+        { kelas: 'XII IPA 2', labelPendek: 'XII IPA 2', wali: 'Bp. Andi Wijaya', total: 36, aman: 32, berisiko: 4, avgScore: 85.3, barColor: '#1e3a8a' },
+        { kelas: 'XII IPA 3', labelPendek: 'XII IPA 3', wali: 'Ibu Dewi Kartika', total: 36, aman: 30, berisiko: 6, avgScore: 81.1, barColor: '#3b82f6' },
+        { kelas: 'XII IPS 1', labelPendek: 'XII IPS 1', wali: 'Bp. Rudi Santoso', total: 36, aman: 29, berisiko: 7, avgScore: 78.5, barColor: '#f59e0b' },
+        { kelas: 'XII IPS 2', labelPendek: 'XII IPS 2', wali: 'Ibu Lestari W.', total: 36, aman: 30, berisiko: 6, avgScore: 79.8, barColor: '#d97706' },
+        { kelas: 'XII Bahasa', labelPendek: 'XII Bhs', wali: 'Ibu Ratna Mulia', total: 36, aman: 33, berisiko: 3, avgScore: 76.2, barColor: '#9ca3af' },
     ];
 
     const MAX_BAR_HEIGHT = 160;
-    const maxPrediksi = Math.max(...kelasData.map(d => d.prediksi));
-
-    const getPrediksiStyle = (val) => {
-        if (val >= 65) return { background: '#dcfce7', color: '#15803d' };
-        if (val >= 55) return { background: '#fef9c3', color: '#a16207' };
-        return { background: '#ffedd5', color: '#c2410c' };
-    };
+    const maxScore = Math.max(...kelasData.map(d => d.avgScore));
 
     return (
         <div className="rkp-container">
@@ -147,9 +141,8 @@ function RekapKelas_Page() {
                                         <th>Kelas</th>
                                         <th>Wali Kelas</th>
                                         <th>Total Siswa</th>
-                                        <th className="rkp-th-siap">Siap</th>
+                                        <th className="rkp-th-siap">Aman</th>
                                         <th className="rkp-th-berisiko">Berisiko</th>
-                                        <th className="rkp-th-prediksi">Prediksi Lolos</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -158,16 +151,8 @@ function RekapKelas_Page() {
                                             <td className="rkp-td-kelas">{row.kelas}</td>
                                             <td className="rkp-td-wali">{row.wali}</td>
                                             <td>{row.total}</td>
-                                            <td className="rkp-td-siap">{row.siap}</td>
+                                            <td className="rkp-td-siap">{row.aman}</td>
                                             <td className="rkp-td-berisiko">{row.berisiko}</td>
-                                            <td>
-                                                <span
-                                                    className="rkp-prediksi-badge"
-                                                    style={getPrediksiStyle(row.prediksi)}
-                                                >
-                                                    {row.prediksi}%
-                                                </span>
-                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -176,10 +161,10 @@ function RekapKelas_Page() {
                     </section>
 
                     <section className="rkp-card rkp-chart-card">
-                        <h3 className="rkp-chart-title">Visualisasi prediksi lolos per kelas</h3>
+                        <h3 className="rkp-chart-title">Visualisasi rata-rata nilai rapor per kelas</h3>
                         <div className="rkp-chart-area">
                             {kelasData.map((row) => {
-                                const barH = Math.round((row.prediksi / maxPrediksi) * MAX_BAR_HEIGHT);
+                                const barH = Math.round((row.avgScore / maxScore) * MAX_BAR_HEIGHT);
                                 return (
                                     <div key={row.kelas} className="rkp-bar-col">
                                         <div className="rkp-bar-track">
@@ -187,7 +172,7 @@ function RekapKelas_Page() {
                                                 className="rkp-bar"
                                                 style={{ height: `${barH}px`, backgroundColor: row.barColor }}
                                             >
-                                                <span className="rkp-bar-pct">{row.prediksi}%</span>
+                                                <span className="rkp-bar-pct">{row.avgScore}</span>
                                             </div>
                                         </div>
                                         <span className="rkp-bar-label">{row.labelPendek}</span>

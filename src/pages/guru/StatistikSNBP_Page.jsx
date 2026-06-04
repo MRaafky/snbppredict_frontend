@@ -117,9 +117,9 @@ export default function StatistikSNBP_Page() {
 
   const statCards = [
     {
-      title: 'On track',
-      value: '18',
-      subtext: 'dari 36 siswa (50%)',
+      title: 'Aman',
+      value: '19',
+      subtext: 'dari 36 siswa (54%)',
       valueColor: '#16a34a',
     },
     {

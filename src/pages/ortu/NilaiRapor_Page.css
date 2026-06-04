@@ -392,8 +392,13 @@
   border-bottom: none;
 }
 
-.nr-table td.score-val {
+.nr-table td.score-val.berisiko {
   color: #A32D2D;
+  font-weight: 800;
+}
+
+.nr-table td.score-val.aman {
+  color: #15803d;
   font-weight: 800;
 }
 
@@ -406,10 +411,16 @@
   border-radius: 9999px;
 }
 
-.nr-status-badge.remedial {
+.nr-status-badge.berisiko {
   background-color: #fdf2f2;
   color: #A32D2D;
   border: 1px solid #fde8e8;
+}
+
+.nr-status-badge.aman {
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #dcfce7;
 }
 
 /* --- Bar Chart (Tren Nilai) --- */
@@ -436,6 +447,16 @@
   align-items: center;
   gap: 8px;
   flex: 1;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.nr-bar-container {
+  height: 130px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 .nr-bar {

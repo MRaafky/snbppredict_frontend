@@ -372,6 +372,95 @@
   border-color: #fde8e8;
 }
 
+/* ---- Left Column & Divider ---- */
+.ps-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ps-divider {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 20px 0;
+}
+
+/* ---- Detailed Grades Card ---- */
+.ps-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.ps-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+}
+
+.ps-semester-badge {
+  background-color: #eff5fb;
+  color: #185FA5;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid #d2e2f2;
+}
+
+.ps-subject-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ps-subject-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ps-subject-name {
+  width: 140px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.ps-progress-track {
+  flex-grow: 1;
+  height: 10px;
+  background-color: #f3f2ed;
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ps-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.5s ease-out;
+}
+
+.ps-progress-score {
+  width: 32px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 900;
+  color: #1e293b;
+  flex-shrink: 0;
+}
+
+.ps-kkm-note {
+  margin-top: 24px;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
 /* ---- Factor Rows ---- */
 .ps-factors-title {
   font-size: 13px;
@@ -572,5 +661,15 @@
   .ps-gauge-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .ps-subject-row {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+
+  .ps-progress-track {
+    width: 100%;
+    order: 3;
   }
 }
