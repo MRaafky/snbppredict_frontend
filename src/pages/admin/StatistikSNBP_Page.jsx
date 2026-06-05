@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './StatistikSNBP_Page.css';
+import api from '../../api/axios';
 
 function StatistikSNBP_Page() {
     const navigate = useNavigate();
@@ -11,28 +12,53 @@ function StatistikSNBP_Page() {
         navigate('/');
     };
 
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/dashboard/snbp-stats');
+                if (res.data.success) {
+                    setData(res.data.data);
+                }
+            } catch (error) {
+                console.error('Error fetching admin statistik:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
+
+    const totalSiswa = data?.totalSiswa || 0;
+    const amanCount = data?.distribusiRisiko?.rendah || 0;
+    const berisikoCount = (data?.distribusiRisiko?.tinggi || 0) + (data?.distribusiRisiko?.sedang || 0);
+
+    const amanPct = totalSiswa > 0 ? ((amanCount / totalSiswa) * 100).toFixed(1) : 0;
+    const berisikoPct = totalSiswa > 0 ? ((berisikoCount / totalSiswa) * 100).toFixed(1) : 0;
+
+    const kelasCount = data?.kelasPerforma?.length || 0;
+
     // ── Data Statistik ────────────────────────────────────────────────
     const statCards = [
-        { label: 'Total Siswa Kelas XII', value: '216', sub: '6 kelas paralel', color: 'blue' },
-        { label: 'Aman', value: '185', sub: '85.6% dari total', color: 'green' },
-        { label: 'Siswa Berisiko', value: '31', sub: '14.4% dari total', color: 'red' },
+        { label: 'Total Siswa Kelas XII', value: String(totalSiswa), sub: `${kelasCount} kelas paralel`, color: 'blue' },
+        { label: 'Aman', value: String(amanCount), sub: `${amanPct}% dari total`, color: 'green' },
+        { label: 'Siswa Berisiko', value: String(berisikoCount), sub: `${berisikoPct}% dari total`, color: 'red' },
     ];
 
     const distribusiData = [
-        { label: 'Aman', count: 185, pct: 85.6, color: '#16a34a' },
-        { label: 'Berisiko', count: 31, pct: 14.4, color: '#dc2626' },
+        { label: 'Aman', count: amanCount, pct: parseFloat(amanPct), color: '#16a34a' },
+        { label: 'Berisiko', count: berisikoCount, pct: parseFloat(berisikoPct), color: '#dc2626' },
     ];
 
-    const kelasPerforma = [
-        { kelas: 'XII IPA 1', aman: 31, total: 36, pct: 86, trend: '+3' },
-        { kelas: 'XII IPA 2', aman: 32, total: 36, pct: 89, trend: '+5' },
-        { kelas: 'XII IPA 3', aman: 30, total: 36, pct: 83, trend: '+1' },
-        { kelas: 'XII IPS 1', aman: 29, total: 36, pct: 81, trend: '-2' },
-        { kelas: 'XII IPS 2', aman: 30, total: 36, pct: 83, trend: '+4' },
-        { kelas: 'XII Bahasa', aman: 33, total: 36, pct: 92, trend: '+2' },
-    ];
-
-
+    const kelasPerforma = data?.kelasPerforma?.length > 0 ? data.kelasPerforma.map(k => ({
+        kelas: k.kelas,
+        aman: k.aman,
+        total: k.total,
+        pct: k.pct,
+        trend: '+0' // Placeholder for trend
+    })) : [];
 
     const getPctStyle = (pct) => {
         if (pct >= 85) return { background: '#e8f5e9', color: '#2e7d32' };
@@ -167,7 +193,7 @@ function StatistikSNBP_Page() {
                         {statCards.map((c) => (
                             <div key={c.label} className="snbs-stat-card">
                                 <span className="snbs-stat-label">{c.label}</span>
-                                <div className={`snbs-stat-value snbs-val-${c.color}`}>{c.value}</div>
+                                <div className={`snbs-stat-value snbs-val-${c.color}`}>{loading ? '—' : c.value}</div>
                                 <div className="snbs-stat-sub">{c.sub}</div>
                             </div>
                         ))}
@@ -198,7 +224,7 @@ function StatistikSNBP_Page() {
                                 <section className="snbs-card">
                                     <div className="snbs-card-header">
                                         <h3 className="snbs-card-title">Performa kesiapan per kelas</h3>
-                                        <span className="snbs-badge-blue">6 Kelas</span>
+                                        <span className="snbs-badge-blue">{kelasCount} Kelas</span>
                                     </div>
                                     <div className="snbs-table-wrapper">
                                         <table className="snbs-table">
@@ -212,23 +238,29 @@ function StatistikSNBP_Page() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {kelasPerforma.map((row) => (
-                                                    <tr key={row.kelas}>
-                                                        <td className="snbs-td-bold">{row.kelas}</td>
-                                                        <td>{row.aman}</td>
-                                                        <td className="snbs-td-muted">{row.total}</td>
-                                                        <td>
-                                                            <span className="snbs-pct-badge" style={getPctStyle(row.pct)}>
-                                                                {row.pct}%
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="snbs-trend" style={getTrendStyle(row.trend)}>
-                                                                {row.trend}%
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {loading ? (
+                                                    <tr><td colSpan="5" style={{textAlign: 'center', padding: '20px'}}>Memuat data...</td></tr>
+                                                ) : kelasPerforma.length === 0 ? (
+                                                    <tr><td colSpan="5" style={{textAlign: 'center', padding: '20px'}}>Belum ada data</td></tr>
+                                                ) : (
+                                                    kelasPerforma.map((row) => (
+                                                        <tr key={row.kelas}>
+                                                            <td className="snbs-td-bold">{row.kelas}</td>
+                                                            <td>{row.aman}</td>
+                                                            <td className="snbs-td-muted">{row.total}</td>
+                                                            <td>
+                                                                <span className="snbs-pct-badge" style={getPctStyle(row.pct)}>
+                                                                    {row.pct}%
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span className="snbs-trend" style={getTrendStyle(row.trend)}>
+                                                                    {row.trend}%
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
@@ -241,7 +273,9 @@ function StatistikSNBP_Page() {
                                     <section className="snbs-card">
                                         <h3 className="snbs-card-title">Kesiapan per kelas</h3>
                                         <div className="snbs-bar-chart">
-                                            {kelasPerforma.map((row) => (
+                                            {loading ? (
+                                                <div style={{textAlign: 'center', padding: '20px'}}>Memuat grafik...</div>
+                                            ) : kelasPerforma.map((row) => (
                                                 <div key={row.kelas} className="snbs-bar-row">
                                                     <span className="snbs-bar-row-label">{row.kelas}</span>
                                                     <div className="snbs-bar-track">
@@ -273,11 +307,11 @@ function StatistikSNBP_Page() {
                                             </div>
                                             <div className="snbs-summary-row">
                                                 <span className="snbs-summary-label">Rata-rata kesiapan</span>
-                                                <span className="snbs-summary-val">85.6%</span>
+                                                <span className="snbs-summary-val">{amanPct}%</span>
                                             </div>
                                             <div className="snbs-summary-row">
                                                 <span className="snbs-summary-label">Update terakhir</span>
-                                                <span className="snbs-summary-val">22 Mei 2026</span>
+                                                <span className="snbs-summary-val">{new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                             </div>
                                         </div>
                                     </section>
@@ -298,7 +332,7 @@ function StatistikSNBP_Page() {
                                     <div className="snbs-donut-wrapper">
                                         <div className="snbs-donut">
                                             <div className="snbs-donut-center">
-                                                <span className="snbs-donut-total">216</span>
+                                                <span className="snbs-donut-total">{loading ? '—' : totalSiswa}</span>
                                                 <span className="snbs-donut-label">Siswa</span>
                                             </div>
                                         </div>

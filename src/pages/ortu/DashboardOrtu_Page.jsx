@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './DashboardOrtu_Page.css';
+import api from '../../api/axios';
 
 function DashboardOrtu_Page() {
     const navigate = useNavigate();
@@ -11,14 +12,40 @@ function DashboardOrtu_Page() {
         navigate('/');
     };
 
-    // Mock data for student progress with exact hex colors
+    const [student, setStudent] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await api.get('/students');
+                if (res.data.success && res.data.data.length > 0) {
+                    // Use first student as the child
+                    setStudent(res.data.data[0]);
+                }
+            } catch (error) {
+                console.error('Error fetching student:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const s = student || {};
+    const examScore = s.exam_score || 0;
+    const avgAttendance = s.attendance_w1 != null
+        ? (((s.attendance_w1 || 0) + (s.attendance_w2 || 0) + (s.attendance_w3 || 0) + (s.attendance_w4 || 0)) / 4).toFixed(0)
+        : '—';
+
     const subjects = [
-        { name: 'Matematika', score: 62, color: '#A32D2D' },
-        { name: 'Bahasa Indonesia', score: 58, color: '#A32D2D' },
-        { name: 'Biologi', score: 60, color: '#A32D2D' },
-        { name: 'Kimia', score: 56, color: '#A32D2D' },
-        { name: 'Fisika', score: 65, color: '#ff9f1c' },
-    ];
+        { name: 'Matematika', score: s.math_score || 0, color: (s.math_score || 0) < 75 ? '#A32D2D' : '#16a34a' },
+        { name: 'Bahasa Indonesia', score: s.indo_score || 0, color: (s.indo_score || 0) < 75 ? '#A32D2D' : '#16a34a' },
+        { name: 'Biologi', score: s.bio_score || 0, color: (s.bio_score || 0) < 75 ? '#A32D2D' : '#16a34a' },
+        { name: 'Kimia', score: s.chem_score || 0, color: (s.chem_score || 0) < 75 ? '#A32D2D' : '#16a34a' },
+        { name: 'Fisika', score: s.phy_score || 0, color: (s.phy_score || 0) < 75 ? '#ff9f1c' : '#16a34a' },
+        { name: 'Bahasa Inggris', score: s.eng_score || 0, color: (s.eng_score || 0) < 75 ? '#A32D2D' : '#16a34a' },
+    ].filter(sub => sub.score > 0);
 
     return (
         <div className="db-ortu-container">
@@ -128,7 +155,7 @@ function DashboardOrtu_Page() {
                 <header className="db-ortu-topbar">
                     <div className="db-ortu-page-info">
                         <h2 className="db-ortu-page-title">Beranda</h2>
-                        <p className="db-ortu-page-sub">Pantau perkembangan akademik Farhan Hidayat</p>
+                        <p className="db-ortu-page-sub">Pantau perkembangan akademik {s.nama || 'anak Anda'}</p>
                     </div>
 
                     {/* User Profile + Avatar */}
@@ -155,10 +182,10 @@ function DashboardOrtu_Page() {
                             </div>
                             <div className="db-ortu-alert-text">
                                 <h3 className="db-ortu-alert-title">
-                                    Perhatian diperlukan untuk Farhan Hidayat
+                                    {examScore < 40 ? 'Perhatian diperlukan' : 'Status akademik'} untuk {s.nama || 'anak Anda'}
                                 </h3>
                                 <p className="db-ortu-alert-desc">
-                                    Nilai rata-rata: 58.1 &bull; Kehadiran: 72%
+                                    Exam Score: {examScore.toFixed(1)} &bull; Kehadiran: {avgAttendance}%
                                 </p>
                             </div>
                         </div>
@@ -175,19 +202,19 @@ function DashboardOrtu_Page() {
 
                         {/* Card 1: Rata-rata Nilai */}
                         <div className="db-ortu-stat-card">
-                            <span className="db-ortu-stat-label">Rata-rata nilai</span>
-                            <div className="db-ortu-stat-value">58.1</div>
+                            <span className="db-ortu-stat-label">Exam Score</span>
+                            <div className="db-ortu-stat-value">{loading ? '—' : examScore.toFixed(1)}</div>
                             <div className="db-ortu-stat-sub">
-                                <span>↓</span> dari 65.3
+                                <span>{examScore < 20 ? '⚠️' : '📊'}</span> Data dari database
                             </div>
                         </div>
 
                         {/* Card 2: Kehadiran */}
                         <div className="db-ortu-stat-card">
-                            <span className="db-ortu-stat-label">Kehadiran bulan ini</span>
-                            <div className="db-ortu-stat-value">72%</div>
+                            <span className="db-ortu-stat-label">Kehadiran rata-rata</span>
+                            <div className="db-ortu-stat-value">{loading ? '—' : `${avgAttendance}%`}</div>
                             <div className="db-ortu-stat-sub">
-                                Di bawah standar 85%
+                                {parseInt(avgAttendance) < 85 ? 'Di bawah standar 85%' : 'Memenuhi standar'}
                             </div>
                         </div>
 
@@ -230,7 +257,7 @@ function DashboardOrtu_Page() {
 
                             {/* KKM Warning Label */}
                             <div className="db-ortu-kkm-note">
-                                KKM: 75 &bull; Semua nilai masih di bawah KKM
+                                KKM: 75 &bull; Data dari database
                             </div>
                         </section>
 

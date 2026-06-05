@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './DashboardPage.css'; // Premium shell and sidebar styles
 import './MonitoringKelas_Page.css';
+import api from '../../api/axios';
 
 const navMenu = [
   {
@@ -29,57 +30,28 @@ function Sidebar({ active, onNavigate }) {
         <span className="db-brand-title">SNBP Monitor</span>
         <span className="db-brand-sub">Sistem Cerdas Kesiapan Siswa</span>
       </div>
-
       <nav className="db-nav">
         {navMenu.map((section) => (
           <div key={section.group} className="db-nav-group">
             <span className="db-nav-group-label">{section.group}</span>
             {section.items.map((item) => (
-              <button
-                key={item.id}
-                className={`db-nav-item${active === item.id ? ' active' : ''}`}
-                onClick={() => onNavigate(item.id)}
-                type="button"
-              >
-                <span className="db-nav-icon">{item.icon}</span>
-                {item.label}
+              <button key={item.id} className={`db-nav-item${active === item.id ? ' active' : ''}`} onClick={() => onNavigate(item.id)} type="button">
+                <span className="db-nav-icon">{item.icon}</span>{item.label}
               </button>
             ))}
           </div>
         ))}
       </nav>
-
       <div className="db-sidebar-bottom">
-        <button
-          className={`db-nav-item${active === 'notifikasi-settings' ? ' active' : ''}`}
-          onClick={() => onNavigate('notifikasi-settings')}
-          type="button"
-        >
-          <span className="db-nav-icon">🔔</span>
-          Notifikasi
-        </button>
-        <button
-          className={`db-nav-item${active === 'pengaturan' ? ' active' : ''}`}
-          onClick={() => onNavigate('pengaturan')}
-          type="button"
-        >
-          <span className="db-nav-icon">⚙</span>
-          Pengaturan
-        </button>
-        <button
-          className="db-nav-item db-nav-logout"
-          onClick={() => onNavigate('keluar')}
-          type="button"
-        >
-          <span className="db-nav-icon">⏻</span>
-          Keluar
-        </button>
+        <button className={`db-nav-item${active === 'notifikasi-settings' ? ' active' : ''}`} onClick={() => onNavigate('notifikasi-settings')} type="button"><span className="db-nav-icon">🔔</span>Notifikasi</button>
+        <button className={`db-nav-item${active === 'pengaturan' ? ' active' : ''}`} onClick={() => onNavigate('pengaturan')} type="button"><span className="db-nav-icon">⚙</span>Pengaturan</button>
+        <button className="db-nav-item db-nav-logout" onClick={() => onNavigate('keluar')} type="button"><span className="db-nav-icon">⏻</span>Keluar</button>
       </div>
     </aside>
   );
 }
 
-function Topbar({ title = 'Monitoring Kelas', subtitle = 'Tahun Ajaran 2025/2026 • Kelas XII IPA 1' }) {
+function Topbar({ title = 'Monitoring Kelas', subtitle = 'Tahun Ajaran 2025/2026' }) {
   return (
     <header className="db-topbar">
       <div className="db-topbar-left" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -99,6 +71,25 @@ function Topbar({ title = 'Monitoring Kelas', subtitle = 'Tahun Ajaran 2025/2026
 
 const MonitoringKelas_Page = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    const fetchMonitoring = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/academic/monitoring');
+        if (res.data.success) {
+          setData(res.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching monitoring:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMonitoring();
+  }, []);
 
   const handleNavigate = (id) => {
     if (id === 'dashboard') navigate('/dashboard');
@@ -109,82 +100,85 @@ const MonitoringKelas_Page = () => {
     if (id === 'ekspor') navigate('/ekspor-data');
     if (id === 'notifikasi-settings') navigate('/notifikasi');
     if (id === 'pengaturan') navigate('/pengaturan');
-    if (id === 'keluar') navigate('/');
+    if (id === 'keluar') { localStorage.removeItem('token'); localStorage.removeItem('role'); navigate('/'); }
   };
 
+  const overallAtt = data?.overallAttendance || '—';
+  const activeStudents = data?.activeStudents || 0;
+  const totalStudents = data?.totalStudents || 0;
+  const extraCount = data?.extracurricularCount || 0;
+  const weekly = data?.weekly || [];
+  const lowAttendanceStudents = data?.lowAttendanceStudents || [];
+
   const statCards = [
-    { label: 'Kehadiran rata-rata', value: '94%', sub: '↑ 1 dari bulan lalu', subColor: '#16a34a', accent: '#16a34a' },
-    { label: 'Siswa aktif', value: '34', sub: 'dari 36 siswa', subColor: '#555', accent: '#2563eb' },
-    { label: 'Ekstrakurikuler', value: '28', sub: 'ikut ekskul aktif', subColor: '#555', accent: '#ea580c' },
+    { label: 'Kehadiran rata-rata', value: `${overallAtt}%`, sub: 'Data dari database', subColor: '#16a34a', accent: '#16a34a' },
+    { label: 'Siswa aktif', value: String(activeStudents), sub: `dari ${totalStudents} siswa`, subColor: '#555', accent: '#2563eb' },
+    { label: 'Ekstrakurikuler', value: String(extraCount), sub: 'ikut ekskul aktif', subColor: '#555', accent: '#ea580c' },
   ];
 
-  const weeklyAttendance = [
-    { label: 'Minggu 1', value: 96, color: '#16a34a' },
-    { label: 'Minggu 2', value: 94, color: '#16a34a' },
-    { label: 'Minggu 3', value: 91, color: '#2563eb' },
-    { label: 'Minggu 4', value: 88, color: '#ea580c' },
-  ];
-
-  const absentStudents = [
-    { name: 'Farhan Hidayat', initials: 'FH', detail: '8 hari absen bulan ini', badges: [{ text: 'Pantau', class: 'badge-pantau' }, { text: 'Kritis', class: 'badge-kritis' }] },
-    { name: 'Dewi Pratiwi', initials: 'DP', detail: '5 hari absen bulan ini', badges: [{ text: 'Perhatian', class: 'badge-perhatian' }] },
-    { name: 'Rizal Kurniawan', initials: 'RK', detail: '4 hari absen bulan ini', badges: [{ text: 'Perhatian', class: 'badge-perhatian' }] },
-  ];
-
-
+  const weeklyAttendance = weekly.map((val, idx) => ({
+    label: `Minggu ${idx + 1}`,
+    value: parseInt(val),
+    color: parseInt(val) >= 90 ? '#16a34a' : parseInt(val) >= 80 ? '#2563eb' : '#ea580c'
+  }));
 
   return (
     <div className="db-shell">
-      {/* Unified Sidebar */}
       <Sidebar active="monitoring" onNavigate={handleNavigate} />
-
-      {/* Main Area */}
       <div className="db-main">
-        {/* Unified Topbar */}
-        <Topbar title="Monitoring Kelas" subtitle="Tahun Ajaran 2025/2026 • Kelas XII &middot; Kelas XII IPA 1" />
-
-        {/* Content Area */}
+        <Topbar title="Monitoring Kelas" subtitle="Tahun Ajaran 2025/2026" />
         <main className="db-content monitoring-content-wrapper">
           
           {/* Top 3 Stat Cards */}
           <section className="summary-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-            {statCards.map((card, idx) => (
-              <div key={idx} className="db-stat-card">
-                <span className="db-stat-label">{card.label}</span>
-                <span className="db-stat-value" style={{ color: card.accent }}>{card.value}</span>
-                <span className="db-stat-sub" style={{ color: card.subColor }}>{card.sub}</span>
-              </div>
-            ))}
+            {loading ? (
+              [1, 2, 3].map(i => (
+                <div key={i} className="db-stat-card db-skeleton">
+                  <div className="skeleton-line skeleton-sm"></div>
+                  <div className="skeleton-line skeleton-lg"></div>
+                  <div className="skeleton-line skeleton-sm"></div>
+                </div>
+              ))
+            ) : (
+              statCards.map((card, idx) => (
+                <div key={idx} className="db-stat-card">
+                  <span className="db-stat-label">{card.label}</span>
+                  <span className="db-stat-value" style={{ color: card.accent }}>{card.value}</span>
+                  <span className="db-stat-sub" style={{ color: card.subColor }}>{card.sub}</span>
+                </div>
+              ))
+            )}
           </section>
 
-          {/* Middle Layout (Weekly attendance vs frequently absent) */}
+          {/* Middle Layout */}
           <div className="db-mid-row monitoring-grid-row">
             
             {/* Left Card: Rekap kehadiran per minggu */}
             <div className="db-card attendance-weekly-card">
               <div className="db-card-header">
                 <span className="db-card-title">Rekap kehadiran per minggu</span>
-                <span className="db-badge db-badge-blue">April 2026</span>
+                <span className="db-badge db-badge-blue">Database</span>
               </div>
-
-              <div className="db-progress-list attendance-progress-list">
-                {weeklyAttendance.map((wk) => (
-                  <div key={wk.label} className="db-progress-row attendance-progress-row">
-                    <span className="db-progress-label attendance-label">{wk.label}</span>
-                    <div className="db-progress-track">
-                      <div
-                        className="db-progress-fill"
-                        style={{ width: `${wk.value}%`, background: wk.color }}
-                      />
-                    </div>
-                    <span className="db-progress-count attendance-val">{wk.value}%</span>
+              {loading ? (
+                <div className="db-skeleton-block" style={{ height: '180px' }}></div>
+              ) : (
+                <>
+                  <div className="db-progress-list attendance-progress-list">
+                    {weeklyAttendance.map((wk) => (
+                      <div key={wk.label} className="db-progress-row attendance-progress-row">
+                        <span className="db-progress-label attendance-label">{wk.label}</span>
+                        <div className="db-progress-track">
+                          <div className="db-progress-fill" style={{ width: `${wk.value}%`, background: wk.color }} />
+                        </div>
+                        <span className="db-progress-count attendance-val">{wk.value}%</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-
-              <div className="attendance-footer">
-                Rata-rata kehadiran: 92.3% &bull; Target: &ge;90%
-              </div>
+                  <div className="attendance-footer">
+                    Rata-rata kehadiran: {overallAtt}% &bull; Target: &ge;90%
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Right Card: Siswa sering absen */}
@@ -192,32 +186,38 @@ const MonitoringKelas_Page = () => {
               <div className="db-card-header" style={{ marginBottom: '14px' }}>
                 <span className="db-card-title">Siswa sering absen</span>
               </div>
-
-              <div className="absent-student-list">
-                {absentStudents.map((stud, idx) => (
-                  <div key={idx} className="absent-student-row">
-                    <div className="abs-left">
-                      <div className="abs-avatar-circle">{stud.initials}</div>
-                      <div className="abs-info">
-                        <span className="abs-name">{stud.name}</span>
-                        <span className="abs-detail">{stud.detail}</span>
+              {loading ? (
+                <div className="db-skeleton-block" style={{ height: '180px' }}></div>
+              ) : (
+                <div className="absent-student-list">
+                  {lowAttendanceStudents.length === 0 ? (
+                    <div className="db-empty-state">
+                      <span style={{ fontSize: '24px' }}>✅</span>
+                      <p>Semua siswa hadir dengan baik</p>
+                    </div>
+                  ) : (
+                    lowAttendanceStudents.map((stud, idx) => (
+                      <div key={idx} className="absent-student-row">
+                        <div className="abs-left">
+                          <div className="abs-avatar-circle">{stud.initials}</div>
+                          <div className="abs-info">
+                            <span className="abs-name">{stud.nama}</span>
+                            <span className="abs-detail">{stud.days_absent} hari absen bulan ini</span>
+                          </div>
+                        </div>
+                        <div className="abs-badges">
+                          <span className={`abs-badge ${stud.status === 'KRITIS' ? 'badge-kritis' : 'badge-perhatian'}`}>
+                            {stud.status}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="abs-badges">
-                      {stud.badges.map((b, bIdx) => (
-                        <span key={bIdx} className={`abs-badge ${b.class}`}>{b.text}</span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* In the mockup, there was a "Buat surat panggilan" button here. It has been removed per user instruction. */}
+                    ))
+                  )}
+                </div>
+              )}
             </div>
 
           </div>
-
-
 
         </main>
       </div>

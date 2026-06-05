@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './DashboardSekolah_Page.css';
+import api from '../../api/axios';
 
 function DashboardSekolah_Page() {
     const navigate = useNavigate();
@@ -10,15 +11,41 @@ function DashboardSekolah_Page() {
         navigate('/');
     };
 
-    // Data rekap per kelas
-    const kelasData = [
-        { kelas: 'XII IPA 1', wali: 'Ibu Sari R.', aman: 31, berisiko: 5, avgScore: 82.4, color: '#185FA5' },
-        { kelas: 'XII IPA 2', wali: 'Bp. Andi W.', aman: 32, berisiko: 4, avgScore: 85.3, color: '#185FA5' },
-        { kelas: 'XII IPA 3', wali: 'Ibu Dewi K.', aman: 30, berisiko: 6, avgScore: 81.1, color: '#185FA5' },
-        { kelas: 'XII IPS 1', wali: 'Bp. Rudi S.', aman: 29, berisiko: 7, avgScore: 78.5, color: '#f59e0b' },
-        { kelas: 'XII IPS 2', wali: 'Ibu Lestari', aman: 30, berisiko: 6, avgScore: 79.8, color: '#f59e0b' },
-        { kelas: 'XII Bahasa', wali: 'Ibu Ratna M.', aman: 33, berisiko: 3, avgScore: 76.2, color: '#94a3b8' },
-    ];
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/dashboard/snbp-stats');
+                if (res.data.success) {
+                    setData(res.data.data);
+                }
+            } catch (error) {
+                console.error('Error fetching admin dashboard stats:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
+
+    const totalSiswa = data?.totalSiswa || 0;
+    const amanCount = data?.distribusiRisiko?.rendah || 0;
+    const berisikoCount = (data?.distribusiRisiko?.tinggi || 0) + (data?.distribusiRisiko?.sedang || 0);
+    const avgScoreAll = data?.kelasPerforma?.length > 0 
+        ? (data.kelasPerforma.reduce((sum, k) => sum + (k.pct || 0), 0) / data.kelasPerforma.length).toFixed(1) 
+        : 0;
+
+    // Use API data or fallback
+    const kelasData = data?.kelasPerforma?.length > 0 ? data.kelasPerforma.map((k, i) => ({
+        kelas: k.kelas,
+        wali: k.wali || `Wali Kelas ${i+1}`,
+        aman: k.aman,
+        berisiko: k.total - k.aman,
+        avgScore: k.pct,
+        color: k.pct >= 80 ? '#185FA5' : k.pct >= 60 ? '#f59e0b' : '#dc2626'
+    })) : [];
 
     return (
         <div className="dbs-container">
@@ -136,18 +163,18 @@ function DashboardSekolah_Page() {
 
                         <div className="dbs-stat-card">
                             <span className="dbs-stat-label">Total siswa kelas XII</span>
-                            <div className="dbs-stat-value dbs-val-blue">216</div>
-                            <div className="dbs-stat-sub">6 kelas paralel</div>
+                            <div className="dbs-stat-value dbs-val-blue">{loading ? '—' : totalSiswa}</div>
+                            <div className="dbs-stat-sub">{kelasData.length} kelas paralel</div>
                         </div>
 
                         <div className="dbs-stat-card">
                             <span className="dbs-stat-label">Aman</span>
-                            <div className="dbs-stat-value dbs-val-green">185</div>
+                            <div className="dbs-stat-value dbs-val-green">{loading ? '—' : amanCount}</div>
                         </div>
 
                         <div className="dbs-stat-card">
                             <span className="dbs-stat-label">Siswa berisiko</span>
-                            <div className="dbs-stat-value dbs-val-red">31</div>
+                            <div className="dbs-stat-value dbs-val-red">{loading ? '—' : berisikoCount}</div>
                             <div className="dbs-stat-sub dbs-sub-red">Perlu intervensi</div>
                         </div>
 
@@ -160,7 +187,7 @@ function DashboardSekolah_Page() {
                         <section className="dbs-card">
                             <div className="dbs-card-header">
                                 <h3 className="dbs-card-title">Rekap kesiapan SNBP per kelas</h3>
-                                <span className="dbs-badge-blue">6 Kelas</span>
+                                <span className="dbs-badge-blue">{kelasData.length} Kelas</span>
                             </div>
 
                             <div className="dbs-table-wrapper">
@@ -174,14 +201,20 @@ function DashboardSekolah_Page() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {kelasData.map((row) => (
-                                            <tr key={row.kelas}>
-                                                <td className="dbs-td-kelas">{row.kelas}</td>
-                                                <td>{row.wali}</td>
-                                                <td>{row.aman}</td>
-                                                <td className="dbs-td-berisiko">{row.berisiko}</td>
-                                            </tr>
-                                        ))}
+                                        {loading ? (
+                                            <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>Memuat data...</td></tr>
+                                        ) : kelasData.length === 0 ? (
+                                            <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>Belum ada data</td></tr>
+                                        ) : (
+                                            kelasData.map((row) => (
+                                                <tr key={row.kelas}>
+                                                    <td className="dbs-td-kelas">{row.kelas}</td>
+                                                    <td>{row.wali}</td>
+                                                    <td>{row.aman}</td>
+                                                    <td className="dbs-td-berisiko">{row.berisiko}</td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -196,11 +229,11 @@ function DashboardSekolah_Page() {
                                 <div className="dbs-summary-list">
                                     <div className="dbs-summary-row">
                                         <span className="dbs-summary-label">Aman</span>
-                                        <span className="dbs-summary-val dbs-val-green">185 / 216</span>
+                                        <span className="dbs-summary-val dbs-val-green">{amanCount} / {totalSiswa}</span>
                                     </div>
                                     <div className="dbs-summary-row">
-                                        <span className="dbs-summary-label">Rata-rata nilai</span>
-                                        <span className="dbs-summary-val">81.3</span>
+                                        <span className="dbs-summary-label">Rata-rata % Aman</span>
+                                        <span className="dbs-summary-val">{avgScoreAll}%</span>
                                     </div>
                                     <div className="dbs-summary-row">
                                         <span className="dbs-summary-label">Kehadiran rata-rata</span>

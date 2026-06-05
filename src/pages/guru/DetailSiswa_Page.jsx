@@ -1,7 +1,8 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import './DashboardPage.css'; // Premium shell and sidebar styles
 import './DetailSiswa_Page.css';
+import api from '../../api/axios';
 
 const navMenu = [
   {
@@ -118,6 +119,80 @@ function Topbar({ title = 'Detail Siswa', onBack }) {
 
 const DetailSiswa_Page = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const studentId = searchParams.get('id');
+
+  // Data states
+  const [student, setStudent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [predicting, setPredicting] = useState(false);
+  const [prediction, setPrediction] = useState(null);
+  const [narasi, setNarasi] = useState(null);
+  const [narasiLoading, setNarasiLoading] = useState(false);
+
+  // Fetch student data
+  useEffect(() => {
+    const fetchStudent = async () => {
+      if (!studentId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const res = await api.get(`/students/${studentId}`);
+        if (res.data.success) {
+          setStudent(res.data.data);
+          
+          // If student has warnings/predictions, use latest
+          const data = res.data.data;
+          if (data.riwayatPrediksi && data.riwayatPrediksi.length > 0) {
+            setPrediction(data.riwayatPrediksi[data.riwayatPrediksi.length - 1]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching student:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudent();
+  }, [studentId]);
+
+  // Run AI prediction
+  const handlePredict = async () => {
+    if (!studentId) return;
+    try {
+      setPredicting(true);
+      const res = await api.post('/predict', { student_id: parseInt(studentId) });
+      if (res.data.success) {
+        setPrediction(res.data.data);
+      }
+    } catch (error) {
+      console.error('Error predicting:', error);
+    } finally {
+      setPredicting(false);
+    }
+  };
+
+  // Fetch AI narasi
+  const handleFetchNarasi = async () => {
+    if (!studentId) return;
+    try {
+      setNarasiLoading(true);
+      const res = await api.post('/predict/narasi', {
+        student_id: parseInt(studentId),
+        role: 'guru'
+      });
+      if (res.data.success) {
+        setNarasi(res.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching narasi:', error);
+    } finally {
+      setNarasiLoading(false);
+    }
+  };
 
   const handleNavigate = (id) => {
     if (id === 'dashboard') navigate('/dashboard');
@@ -128,28 +203,66 @@ const DetailSiswa_Page = () => {
     if (id === 'ekspor') navigate('/ekspor-data');
     if (id === 'notifikasi-settings') navigate('/notifikasi');
     if (id === 'pengaturan') navigate('/pengaturan');
-    if (id === 'keluar') navigate('/');
+    if (id === 'keluar') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      navigate('/');
+    }
   };
 
-  const student = {
-    name: 'Farhan Hidayat',
-    class: 'XII IPA 1',
-    minat: 'Akuntansi',
-    prodi: 'UPN Yogyakarta',
-    status: 'Berisiko',
-    score: 58.1,
-    attendance: '72%',
-    extracurricular: '—',
-    prediction: '41%',
-    avatarInitials: 'FH',
-    subjects: [
-      { name: 'Matematika', score: 62 },
-      { name: 'Bahasa Indonesia', score: 58 },
-      { name: 'Biologi', score: 60 },
-      { name: 'Kimia', score: 56 },
-      { name: 'Fisika', score: 65 },
-    ]
-  };
+  if (loading) {
+    return (
+      <div className="db-shell">
+        <Sidebar active="prediksi" onNavigate={handleNavigate} />
+        <div className="db-main">
+          <Topbar title="Detail Siswa" onBack={() => navigate('/prediksi-siswa')} />
+          <main className="db-content">
+            <div className="db-skeleton-block" style={{ height: '120px' }}></div>
+            <div className="db-mid-row">
+              <div className="db-skeleton-block" style={{ height: '250px' }}></div>
+              <div className="db-skeleton-block" style={{ height: '250px' }}></div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (!student) {
+    return (
+      <div className="db-shell">
+        <Sidebar active="prediksi" onNavigate={handleNavigate} />
+        <div className="db-main">
+          <Topbar title="Detail Siswa" onBack={() => navigate('/prediksi-siswa')} />
+          <main className="db-content">
+            <div className="db-empty-state" style={{ minHeight: '300px' }}>
+              <span style={{ fontSize: '48px' }}>🔍</span>
+              <p>Siswa tidak ditemukan</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Prepare display data
+  const examScore = student.exam_score || 0;
+  const status = examScore < 20 ? 'Berisiko' : examScore < 40 ? 'Perhatian' : 'Siap';
+  const avatarInitials = (student.nama || 'XX').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  
+  const subjects = [
+    { name: 'Matematika', score: student.math_score || 0 },
+    { name: 'Bahasa Indonesia', score: student.indo_score || 0 },
+    { name: 'Biologi', score: student.bio_score || 0 },
+    { name: 'Kimia', score: student.chem_score || 0 },
+    { name: 'Fisika', score: student.phy_score || 0 },
+    { name: 'Bahasa Inggris', score: student.eng_score || 0 },
+  ].filter(s => s.score > 0);
+
+  // Calculate average attendance
+  const avgAttendance = (
+    ((student.attendance_w1 || 0) + (student.attendance_w2 || 0) + (student.attendance_w3 || 0) + (student.attendance_w4 || 0)) / 4
+  ).toFixed(0);
 
   return (
     <div className="db-shell">
@@ -167,44 +280,109 @@ const DetailSiswa_Page = () => {
           {/* 1. Student Header Card */}
           <div className="student-detail-header-card">
             <div className="sdh-left">
-              <div className="sdh-avatar-circle">{student.avatarInitials}</div>
+              <div className="sdh-avatar-circle">{avatarInitials}</div>
               <div className="sdh-info">
-                <h2>{student.name}</h2>
-                <p>{student.class} &middot; Minat: {student.minat} &middot; {student.prodi}</p>
+                <h2>{student.nama || 'Siswa'}</h2>
+                <p>ID: {student.student_id} &middot; {student.prodi || 'Prodi belum diisi'}</p>
                 <div className="sdh-badges">
-                  <span className="sdh-badge badge-risk">{student.status}</span>
-                  <span className="sdh-badge badge-score">Skor: {student.score}</span>
+                  <span className={`sdh-badge ${status === 'Berisiko' ? 'badge-risk' : status === 'Perhatian' ? 'badge-warning' : 'badge-safe'}`}>
+                    {status}
+                  </span>
+                  <span className="sdh-badge badge-score">Skor: {examScore.toFixed(1)}</span>
                 </div>
               </div>
             </div>
             <div className="sdh-right">
-              <span className="sdh-pred-badge" style={{ fontSize: '13px', padding: '6px 16px' }}>{student.status}</span>
+              <button
+                className="predict-batch-btn"
+                onClick={handlePredict}
+                disabled={predicting}
+                style={{ fontSize: '13px', padding: '8px 18px' }}
+              >
+                {predicting ? (
+                  <>
+                    <span className="predict-spinner"></span>
+                    Memproses...
+                  </>
+                ) : (
+                  <>🤖 Jalankan Prediksi AI</>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* 2. Grid for Subject Scores & Stats/Actions */}
+          {/* 2. AI Prediction Panel */}
+          {prediction && (
+            <div className="db-card ai-prediction-card">
+              <div className="db-card-header">
+                <span className="db-card-title">
+                  ✨ Hasil Prediksi AI
+                </span>
+                <span className={`pred-source-badge ${prediction.is_simulated ? 'pred-sim' : 'pred-ai'}`}>
+                  {prediction.is_simulated ? 'Simulasi' : 'Powered by AI'}
+                </span>
+              </div>
+              <div className="ai-pred-grid">
+                <div className="ai-pred-item">
+                  <span className="ai-pred-label">Prediksi Nilai</span>
+                  <span className="ai-pred-value" style={{ color: '#1d4ed8' }}>
+                    {typeof prediction.prediksi_nilai === 'number' ? prediction.prediksi_nilai.toFixed(1) : prediction.prediksi_nilai || '—'}
+                  </span>
+                </div>
+                <div className="ai-pred-item">
+                  <span className="ai-pred-label">Level Risiko</span>
+                  <span className={`ai-pred-value ai-risk-${prediction.level_risiko || 'rendah'}`}>
+                    {prediction.level_risiko ? prediction.level_risiko.charAt(0).toUpperCase() + prediction.level_risiko.slice(1) : '—'}
+                  </span>
+                </div>
+                <div className="ai-pred-item">
+                  <span className="ai-pred-label">Tren</span>
+                  <span className="ai-pred-value" style={{ color: prediction.tren === 'naik' ? '#16a34a' : prediction.tren === 'turun' ? '#dc2626' : '#64748b' }}>
+                    {prediction.tren === 'naik' ? '↑ Naik' : prediction.tren === 'turun' ? '↓ Turun' : '→ Stabil'}
+                  </span>
+                </div>
+                <div className="ai-pred-item">
+                  <span className="ai-pred-label">Confidence</span>
+                  <span className="ai-pred-value" style={{ color: '#7c3aed' }}>
+                    {prediction.confidence != null ? (
+                      prediction.confidence > 0 ? `${(prediction.confidence * 100).toFixed(0)}%` : '—'
+                    ) : '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 3. Grid for Subject Scores & Stats/Actions */}
           <div className="db-mid-row detail-grid-row">
             
             {/* Left Card: Nilai per mata pelajaran */}
             <div className="db-card detail-subjects-card">
               <div className="db-card-header">
                 <span className="db-card-title">Nilai per mata pelajaran</span>
-                <span className="db-badge db-badge-blue">Sem. 5</span>
+                <span className="db-badge db-badge-blue">Database</span>
               </div>
 
               <div className="db-progress-list detail-progress-list">
-                {student.subjects.map((subj) => (
+                {subjects.length > 0 ? subjects.map((subj) => (
                   <div key={subj.name} className="db-progress-row detail-progress-row">
                     <span className="db-progress-label detail-subj-name">{subj.name}</span>
                     <div className="db-progress-track">
                       <div
                         className="db-progress-fill"
-                        style={{ width: `${subj.score}%`, background: '#ef4444' }} // red theme like the screenshot
+                        style={{ 
+                          width: `${subj.score}%`, 
+                          background: subj.score >= 75 ? '#2563eb' : '#ef4444'
+                        }}
                       />
                     </div>
-                    <span className="db-progress-count detail-subj-score">{subj.score}</span>
+                    <span className="db-progress-count detail-subj-score">{subj.score.toFixed(1)}</span>
                   </div>
-                ))}
+                )) : (
+                  <div className="db-empty-state" style={{ padding: '20px' }}>
+                    <p>Belum ada data nilai</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -219,36 +397,60 @@ const DetailSiswa_Page = () => {
                 
                 <div className="detail-stats-list">
                   <div className="detail-stat-row">
-                    <span className="ds-label">Rata-rata nilai</span>
-                    <span className="ds-val" style={{ fontWeight: 600 }}>{student.score}</span>
+                    <span className="ds-label">Exam Score</span>
+                    <span className="ds-val" style={{ fontWeight: 600 }}>{examScore.toFixed(1)}</span>
                   </div>
                   <div className="detail-stat-row">
                     <span className="ds-label">Kehadiran</span>
-                    <span className="ds-val" style={{ color: '#ef4444', fontWeight: 600 }}>{student.attendance}</span>
+                    <span className="ds-val" style={{ color: parseInt(avgAttendance) < 75 ? '#ef4444' : '#16a34a', fontWeight: 600 }}>{avgAttendance}%</span>
+                  </div>
+                  <div className="detail-stat-row">
+                    <span className="ds-label">Jam Belajar</span>
+                    <span className="ds-val">{student.study_hours || '—'} jam</span>
                   </div>
                   <div className="detail-stat-row" style={{ borderBottom: 'none' }}>
                     <span className="ds-label">Ekstrakurikuler</span>
-                    <span className="ds-val">{student.extracurricular}</span>
+                    <span className="ds-val">{student.extracurricular_active ? '✅ Aktif' : '—'}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Card 2: Aksi guru */}
+              {/* Card 2: Narasi AI */}
               <div className="db-card detail-actions-card">
                 <div className="db-card-header" style={{ marginBottom: '14px' }}>
-                  <span className="db-card-title">Aksi guru</span>
+                  <span className="db-card-title">✨ Rekomendasi AI</span>
                 </div>
                 
-                <div className="detail-action-buttons">
-                  <button className="teacher-action-btn" type="button">
-                    <span>Catat bimbingan</span>
-                    <span className="tab-arrow">↗</span>
-                  </button>
-                  <button className="teacher-action-btn" type="button">
-                    <span>Kirim notif orang tua</span>
-                    <span className="tab-arrow">↗</span>
-                  </button>
-                </div>
+                {narasi ? (
+                  <div className="ai-narasi-content">
+                    <p style={{ fontSize: '13px', lineHeight: '1.6', color: '#334155', margin: 0 }}>
+                      {narasi.narasi}
+                    </p>
+                    <span className={`pred-source-badge ${narasi.is_ai ? 'pred-ai' : 'pred-sim'}`} style={{ marginTop: '10px', display: 'inline-block' }}>
+                      {narasi.is_ai ? '✨ Powered by AI' : 'Fallback'}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="detail-action-buttons">
+                    <button 
+                      className="teacher-action-btn" 
+                      type="button"
+                      onClick={handleFetchNarasi}
+                      disabled={narasiLoading}
+                    >
+                      <span>{narasiLoading ? 'Memuat narasi...' : 'Minta Rekomendasi AI'}</span>
+                      <span className="tab-arrow">✨</span>
+                    </button>
+                    <button className="teacher-action-btn" type="button">
+                      <span>Catat bimbingan</span>
+                      <span className="tab-arrow">↗</span>
+                    </button>
+                    <button className="teacher-action-btn" type="button">
+                      <span>Kirim notif orang tua</span>
+                      <span className="tab-arrow">↗</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
             </div>

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './RekapKelas_Page.css';
+import api from '../../api/axios';
 
 function RekapKelas_Page() {
     const navigate = useNavigate();
@@ -10,17 +11,38 @@ function RekapKelas_Page() {
         navigate('/');
     };
 
-    const kelasData = [
-        { kelas: 'XII IPA 1', labelPendek: 'XII IPA 1', wali: 'Ibu Sari Rahayu', total: 36, aman: 31, berisiko: 5, avgScore: 82.4, barColor: '#1d4ed8' },
-        { kelas: 'XII IPA 2', labelPendek: 'XII IPA 2', wali: 'Bp. Andi Wijaya', total: 36, aman: 32, berisiko: 4, avgScore: 85.3, barColor: '#1e3a8a' },
-        { kelas: 'XII IPA 3', labelPendek: 'XII IPA 3', wali: 'Ibu Dewi Kartika', total: 36, aman: 30, berisiko: 6, avgScore: 81.1, barColor: '#3b82f6' },
-        { kelas: 'XII IPS 1', labelPendek: 'XII IPS 1', wali: 'Bp. Rudi Santoso', total: 36, aman: 29, berisiko: 7, avgScore: 78.5, barColor: '#f59e0b' },
-        { kelas: 'XII IPS 2', labelPendek: 'XII IPS 2', wali: 'Ibu Lestari W.', total: 36, aman: 30, berisiko: 6, avgScore: 79.8, barColor: '#d97706' },
-        { kelas: 'XII Bahasa', labelPendek: 'XII Bhs', wali: 'Ibu Ratna Mulia', total: 36, aman: 33, berisiko: 3, avgScore: 76.2, barColor: '#9ca3af' },
-    ];
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/dashboard/snbp-stats');
+                if (res.data.success) {
+                    setData(res.data.data);
+                }
+            } catch (error) {
+                console.error('Error fetching rekap kelas:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
+
+    const kelasData = data?.kelasPerforma?.length > 0 ? data.kelasPerforma.map((k, i) => ({
+        kelas: k.kelas,
+        labelPendek: k.kelas.replace('XII ', ''),
+        wali: k.wali || `Wali Kelas ${i+1}`,
+        total: k.total,
+        aman: k.aman,
+        berisiko: k.total - k.aman,
+        avgScore: k.pct,
+        barColor: k.pct >= 85 ? '#1d4ed8' : k.pct >= 75 ? '#3b82f6' : k.pct >= 60 ? '#f59e0b' : '#dc2626'
+    })) : [];
 
     const MAX_BAR_HEIGHT = 160;
-    const maxScore = Math.max(...kelasData.map(d => d.avgScore));
+    const maxScore = kelasData.length > 0 ? Math.max(...kelasData.map(d => d.avgScore)) : 100;
 
     return (
         <div className="rkp-container">
@@ -146,15 +168,21 @@ function RekapKelas_Page() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {kelasData.map((row, idx) => (
-                                        <tr key={row.kelas} className={idx % 2 === 0 ? 'rkp-row-even' : ''}>
-                                            <td className="rkp-td-kelas">{row.kelas}</td>
-                                            <td className="rkp-td-wali">{row.wali}</td>
-                                            <td>{row.total}</td>
-                                            <td className="rkp-td-siap">{row.aman}</td>
-                                            <td className="rkp-td-berisiko">{row.berisiko}</td>
-                                        </tr>
-                                    ))}
+                                    {loading ? (
+                                        <tr><td colSpan="5" style={{textAlign: 'center', padding: '20px'}}>Memuat data...</td></tr>
+                                    ) : kelasData.length === 0 ? (
+                                        <tr><td colSpan="5" style={{textAlign: 'center', padding: '20px'}}>Belum ada data</td></tr>
+                                    ) : (
+                                        kelasData.map((row, idx) => (
+                                            <tr key={row.kelas} className={idx % 2 === 0 ? 'rkp-row-even' : ''}>
+                                                <td className="rkp-td-kelas">{row.kelas}</td>
+                                                <td className="rkp-td-wali">{row.wali}</td>
+                                                <td>{row.total}</td>
+                                                <td className="rkp-td-siap">{row.aman}</td>
+                                                <td className="rkp-td-berisiko">{row.berisiko}</td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -163,22 +191,28 @@ function RekapKelas_Page() {
                     <section className="rkp-card rkp-chart-card">
                         <h3 className="rkp-chart-title">Visualisasi rata-rata nilai rapor per kelas</h3>
                         <div className="rkp-chart-area">
-                            {kelasData.map((row) => {
-                                const barH = Math.round((row.avgScore / maxScore) * MAX_BAR_HEIGHT);
-                                return (
-                                    <div key={row.kelas} className="rkp-bar-col">
-                                        <div className="rkp-bar-track">
-                                            <div
-                                                className="rkp-bar"
-                                                style={{ height: `${barH}px`, backgroundColor: row.barColor }}
-                                            >
-                                                <span className="rkp-bar-pct">{row.avgScore}</span>
+                            {loading ? (
+                                <div style={{width: '100%', height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Memuat visualisasi...</div>
+                            ) : kelasData.length === 0 ? (
+                                <div style={{width: '100%', height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Belum ada data</div>
+                            ) : (
+                                kelasData.map((row) => {
+                                    const barH = Math.round((row.avgScore / maxScore) * MAX_BAR_HEIGHT);
+                                    return (
+                                        <div key={row.kelas} className="rkp-bar-col">
+                                            <div className="rkp-bar-track">
+                                                <div
+                                                    className="rkp-bar"
+                                                    style={{ height: `${barH}px`, backgroundColor: row.barColor }}
+                                                >
+                                                    <span className="rkp-bar-pct">{row.avgScore}%</span>
+                                                </div>
                                             </div>
+                                            <span className="rkp-bar-label">{row.labelPendek}</span>
                                         </div>
-                                        <span className="rkp-bar-label">{row.labelPendek}</span>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })
+                            )}
                         </div>
                     </section>
 

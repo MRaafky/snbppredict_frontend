@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './DashboardPage.css'; // Share the premium layout and sidebar style
 import './StatistikSNBP_Page.css';
+import api from '../../api/axios';
 
-/* ── Mock data ─────────────────────────────────────────────────── */
 const navMenu = [
   {
     group: 'MENU UTAMA',
@@ -23,7 +23,6 @@ const navMenu = [
   },
 ];
 
-/* ── Sub-components ────────────────────────────────────────────── */
 function Sidebar({ active, onNavigate }) {
   return (
     <aside className="db-sidebar">
@@ -31,57 +30,28 @@ function Sidebar({ active, onNavigate }) {
         <span className="db-brand-title">SNBP Monitor</span>
         <span className="db-brand-sub">Sistem Cerdas Kesiapan Siswa</span>
       </div>
-
       <nav className="db-nav">
         {navMenu.map((section) => (
           <div key={section.group} className="db-nav-group">
             <span className="db-nav-group-label">{section.group}</span>
             {section.items.map((item) => (
-              <button
-                key={item.id}
-                className={`db-nav-item${active === item.id ? ' active' : ''}`}
-                onClick={() => onNavigate(item.id)}
-                type="button"
-              >
-                <span className="db-nav-icon">{item.icon}</span>
-                {item.label}
+              <button key={item.id} className={`db-nav-item${active === item.id ? ' active' : ''}`} onClick={() => onNavigate(item.id)} type="button">
+                <span className="db-nav-icon">{item.icon}</span>{item.label}
               </button>
             ))}
           </div>
         ))}
       </nav>
-
       <div className="db-sidebar-bottom">
-        <button
-          className={`db-nav-item${active === 'notifikasi-settings' ? ' active' : ''}`}
-          onClick={() => onNavigate('notifikasi-settings')}
-          type="button"
-        >
-          <span className="db-nav-icon">🔔</span>
-          Notifikasi
-        </button>
-        <button
-          className={`db-nav-item${active === 'pengaturan' ? ' active' : ''}`}
-          onClick={() => onNavigate('pengaturan')}
-          type="button"
-        >
-          <span className="db-nav-icon">⚙</span>
-          Pengaturan
-        </button>
-        <button
-          className="db-nav-item db-nav-logout"
-          onClick={() => onNavigate('keluar')}
-          type="button"
-        >
-          <span className="db-nav-icon">⏻</span>
-          Keluar
-        </button>
+        <button className={`db-nav-item${active === 'notifikasi-settings' ? ' active' : ''}`} onClick={() => onNavigate('notifikasi-settings')} type="button"><span className="db-nav-icon">🔔</span>Notifikasi</button>
+        <button className={`db-nav-item${active === 'pengaturan' ? ' active' : ''}`} onClick={() => onNavigate('pengaturan')} type="button"><span className="db-nav-icon">⚙</span>Pengaturan</button>
+        <button className="db-nav-item db-nav-logout" onClick={() => onNavigate('keluar')} type="button"><span className="db-nav-icon">⏻</span>Keluar</button>
       </div>
     </aside>
   );
 }
 
-function Topbar({ title = 'Statistik SNBP', subtitle = 'Tahun Ajaran 2025/2026 • Kelas XII' }) {
+function Topbar({ title = 'Statistik SNBP', subtitle = 'Tahun Ajaran 2025/2026' }) {
   return (
     <header className="db-topbar">
       <div className="db-topbar-left">
@@ -99,9 +69,27 @@ function Topbar({ title = 'Statistik SNBP', subtitle = 'Tahun Ajaran 2025/2026 �
   );
 }
 
-/* ── Main page ─────────────────────────────────────────────────── */
 export default function StatistikSNBP_Page() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/dashboard/snbp-stats');
+        if (res.data.success) {
+          setData(res.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching SNBP stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
 
   const handleNavigate = (id) => {
     if (id === 'dashboard') navigate('/dashboard');
@@ -112,36 +100,22 @@ export default function StatistikSNBP_Page() {
     if (id === 'ekspor') navigate('/ekspor-data');
     if (id === 'notifikasi-settings') navigate('/notifikasi');
     if (id === 'pengaturan') navigate('/pengaturan');
-    if (id === 'keluar') navigate('/');
+    if (id === 'keluar') { localStorage.removeItem('token'); localStorage.removeItem('role'); navigate('/'); }
   };
 
-  const statCards = [
-    {
-      title: 'Aman',
-      value: '19',
-      subtext: 'dari 36 siswa (54%)',
-      valueColor: '#16a34a',
-    },
-    {
-      title: 'Prodi paling diminati',
-      value: 'Kedokteran',
-      subtext: '8 siswa minat',
-      valueColor: '#1e293b',
-    },
-    {
-      title: 'PTN paling diminati',
-      value: 'UGM',
-      subtext: '12 siswa pilih',
-      valueColor: '#1e293b',
-    },
-  ];
+  const totalSiswa = data?.totalSiswa || 0;
+  const amanCount = data?.distribusiRisiko?.rendah || 0;
+  const amanPct = totalSiswa > 0 ? Math.round((amanCount / totalSiswa) * 100) : 0;
+  const kelasPerforma = data?.kelasPerforma || [];
 
-  const peminatanProdi = [
-    { name: 'Kedokteran', count: 8, pct: 80, color: '#1a56db' },
-    { name: 'Teknik Informatika', count: 6, pct: 62, color: '#1e40af' },
-    { name: 'Farmasi', count: 5, pct: 50, color: '#2563eb' },
-    { name: 'Psikologi', count: 4, pct: 40, color: '#3b82f6' },
-    { name: 'Lainnya', count: 13, pct: 30, color: '#cbd5e1' },
+  // Build stat cards
+  const topProdi = kelasPerforma.length > 0 ? kelasPerforma[0].kelas : '—';
+  const topProdiCount = kelasPerforma.length > 0 ? `${kelasPerforma[0].total} siswa` : '';
+
+  const statCards = [
+    { title: 'Aman', value: String(amanCount), subtext: `dari ${totalSiswa} siswa (${amanPct}%)`, valueColor: '#16a34a' },
+    { title: 'Prodi paling diminati', value: topProdi.split(' - ')[0] || topProdi, subtext: topProdiCount, valueColor: '#1e293b' },
+    { title: 'Total siswa', value: String(totalSiswa), subtext: 'Data dari database', valueColor: '#1e293b' },
   ];
 
   return (
@@ -154,82 +128,85 @@ export default function StatistikSNBP_Page() {
         <main className="db-content">
           {/* Upper 3 Stat Cards */}
           <div className="db-stat-grid stat-three-columns">
-            {statCards.map((card, index) => (
-              <div key={index} className="db-stat-card">
-                <span className="db-stat-label">{card.title}</span>
-                <span className="db-stat-value" style={{ color: card.valueColor }}>
-                  {card.value}
-                </span>
-                <span className="db-stat-sub" style={{ color: card.subColor || '#64748b' }}>
-                  {card.subtext}
-                </span>
-              </div>
-            ))}
+            {loading ? (
+              [1, 2, 3].map(i => (
+                <div key={i} className="db-stat-card db-skeleton">
+                  <div className="skeleton-line skeleton-sm"></div>
+                  <div className="skeleton-line skeleton-lg"></div>
+                  <div className="skeleton-line skeleton-sm"></div>
+                </div>
+              ))
+            ) : (
+              statCards.map((card, index) => (
+                <div key={index} className="db-stat-card">
+                  <span className="db-stat-label">{card.title}</span>
+                  <span className="db-stat-value" style={{ color: card.valueColor }}>{card.value}</span>
+                  <span className="db-stat-sub" style={{ color: card.subColor || '#64748b' }}>{card.subtext}</span>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Middle Row Layout */}
           <div className="db-mid-row stat-mid-layout">
             
-            {/* Left Card: Peminatan prodi siswa */}
+            {/* Left Card: Performa per Prodi */}
             <div className="db-card stat-prodi-card">
               <div className="db-card-header no-border">
-                <span className="db-card-title text-large">Peminatan prodi siswa</span>
+                <span className="db-card-title text-large">Performa per Program Studi</span>
               </div>
-
-              <div className="stat-prodi-list">
-                {peminatanProdi.map((prodi, idx) => (
-                  <div key={idx} className="stat-prodi-item">
-                    <div className="stat-prodi-header">
-                      <span className="stat-prodi-name">{prodi.name}</span>
-                      <span className="stat-prodi-count">{prodi.count} siswa</span>
-                    </div>
-                    <div className="stat-prodi-track">
-                      <div
-                        className="stat-prodi-fill"
-                        style={{ width: `${prodi.pct}%`, backgroundColor: prodi.color }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {loading ? (
+                <div className="db-skeleton-block" style={{ height: '250px' }}></div>
+              ) : (
+                <div className="stat-prodi-list">
+                  {kelasPerforma.length === 0 ? (
+                    <div className="db-empty-state"><p>Belum ada data prodi</p></div>
+                  ) : (
+                    kelasPerforma.map((prodi, idx) => (
+                      <div key={idx} className="stat-prodi-item">
+                        <div className="stat-prodi-header">
+                          <span className="stat-prodi-name">{prodi.kelas}</span>
+                          <span className="stat-prodi-count">{prodi.lolos}/{prodi.total} lolos ({prodi.pct}%)</span>
+                        </div>
+                        <div className="stat-prodi-track">
+                          <div className="stat-prodi-fill" style={{ width: `${prodi.pct}%`, backgroundColor: prodi.pct >= 60 ? '#1a56db' : prodi.pct >= 40 ? '#2563eb' : '#cbd5e1' }} />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Right Card: Perbandingan lolos SNBP */}
+            {/* Right Card: Distribusi Risiko */}
             <div className="db-card stat-lolos-card">
               <div className="db-card-header no-border">
-                <span className="db-card-title text-large">Perbandingan lolos SNBP</span>
+                <span className="db-card-title text-large">Distribusi Risiko</span>
               </div>
-
-              <div className="stat-chart-container">
-                <div className="stat-chart-bars">
-                  
-                  {/* Bar 1 */}
-                  <div className="stat-chart-bar-wrapper">
-                    <div className="stat-chart-bar bar-2023">
-                      <span className="stat-bar-val">50%</span>
-                    </div>
-                    <span className="stat-bar-label">2023/2024</span>
+              {loading ? (
+                <div className="db-skeleton-block" style={{ height: '200px' }}></div>
+              ) : (
+                <div className="stat-chart-container">
+                  <div className="stat-chart-bars">
+                    {[
+                      { label: 'Tinggi', count: data?.distribusiRisiko?.tinggi || 0, color: '#ef4444' },
+                      { label: 'Sedang', count: data?.distribusiRisiko?.sedang || 0, color: '#f97316' },
+                      { label: 'Rendah', count: data?.distribusiRisiko?.rendah || 0, color: '#22c55e' },
+                    ].map((item, idx) => {
+                      const maxCount = Math.max(data?.distribusiRisiko?.tinggi || 1, data?.distribusiRisiko?.sedang || 1, data?.distribusiRisiko?.rendah || 1);
+                      const pct = Math.round((item.count / totalSiswa) * 100) || 0;
+                      return (
+                        <div key={idx} className="stat-chart-bar-wrapper">
+                          <div className="stat-chart-bar" style={{ height: `${Math.max(20, (item.count / maxCount) * 100)}%`, background: item.color }}>
+                            <span className="stat-bar-val" style={{ color: 'white' }}>{pct}%</span>
+                          </div>
+                          <span className="stat-bar-label">{item.label} ({item.count})</span>
+                        </div>
+                      );
+                    })}
                   </div>
-
-                  {/* Bar 2 */}
-                  <div className="stat-chart-bar-wrapper">
-                    <div className="stat-chart-bar bar-2024">
-                      <span className="stat-bar-val">56%</span>
-                    </div>
-                    <span className="stat-bar-label">2024/2025</span>
-                  </div>
-
-                  {/* Bar 3 (Highlight Green) */}
-                  <div className="stat-chart-bar-wrapper">
-                    <div className="stat-chart-bar bar-2025 highlighted">
-                      <span className="stat-bar-val text-white font-bold">61%</span>
-                    </div>
-                    <span className="stat-bar-label font-medium text-dark">2025/2026</span>
-                  </div>
-
                 </div>
-              </div>
-
+              )}
             </div>
 
           </div>

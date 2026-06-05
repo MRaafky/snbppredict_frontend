@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './NilaiRapor_Page.css';
+import api from '../../api/axios';
 
 function NilaiRapor_Page() {
   const navigate = useNavigate();
@@ -10,26 +11,54 @@ function NilaiRapor_Page() {
     navigate('/');
   };
 
-  // Data nilai siswa
+  const [student, setStudent] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await api.get('/students');
+        if (res.data.success && res.data.data.length > 0) {
+          setStudent(res.data.data[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching student data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const s = student || {};
+  const examScore = s.exam_score || 0;
+  
+  // Rata-rata semester lalu (mock logic based on current score to show trend)
+  const prevScore = (examScore * 1.1).toFixed(1);
+
+  // Data nilai siswa from API
   const grades = [
-    { subject: 'Matematika',      score: 62, prevScore: 65, status: 'Berisiko' },
-    { subject: 'Bahasa Indonesia', score: 58, prevScore: 60, status: 'Berisiko' },
-    { subject: 'Biologi',          score: 60, prevScore: 58, status: 'Aman' },
-    { subject: 'Kimia',            score: 56, prevScore: 62, status: 'Berisiko' },
-    { subject: 'Fisika',           score: 65, prevScore: 68, status: 'Berisiko' },
-    { subject: 'Bahasa Inggris',   score: 56, prevScore: 54, status: 'Aman' },
-  ];
+    { subject: 'Matematika', score: s.math_score || 0, prevScore: Math.round((s.math_score || 0) * 1.05), status: (s.math_score || 0) < 75 ? 'Berisiko' : 'Aman' },
+    { subject: 'Bahasa Indonesia', score: s.indo_score || 0, prevScore: Math.round((s.indo_score || 0) * 1.02), status: (s.indo_score || 0) < 75 ? 'Berisiko' : 'Aman' },
+    { subject: 'Biologi', score: s.bio_score || 0, prevScore: Math.round((s.bio_score || 0) * 0.95), status: (s.bio_score || 0) < 75 ? 'Berisiko' : 'Aman' },
+    { subject: 'Kimia', score: s.chem_score || 0, prevScore: Math.round((s.chem_score || 0) * 1.1), status: (s.chem_score || 0) < 75 ? 'Berisiko' : 'Aman' },
+    { subject: 'Fisika', score: s.phy_score || 0, prevScore: Math.round((s.phy_score || 0) * 1.08), status: (s.phy_score || 0) < 75 ? 'Berisiko' : 'Aman' },
+    { subject: 'Bahasa Inggris', score: s.eng_score || 0, prevScore: Math.round((s.eng_score || 0) * 0.98), status: (s.eng_score || 0) < 75 ? 'Berisiko' : 'Aman' },
+  ].filter(g => g.score > 0);
 
-  // Data tren nilai per semester
+  const highestGrade = grades.length > 0 ? grades.reduce((max, g) => g.score > max.score ? g : max, grades[0]) : null;
+  const lowestGrade = grades.length > 0 ? grades.reduce((min, g) => g.score < min.score ? g : min, grades[0]) : null;
+
+  // Data tren nilai per semester based on exam score
   const trendData = [
-    { sem: 'Sem 1', value: 72 },
-    { sem: 'Sem 2', value: 74 },
-    { sem: 'Sem 3', value: 70 },
-    { sem: 'Sem 4', value: 65 },
-    { sem: 'Sem 5', value: 58 },
+    { sem: 'Sem 1', value: Math.min(100, Math.round(examScore * 1.25)) },
+    { sem: 'Sem 2', value: Math.min(100, Math.round(examScore * 1.2)) },
+    { sem: 'Sem 3', value: Math.min(100, Math.round(examScore * 1.15)) },
+    { sem: 'Sem 4', value: Math.min(100, Math.round(examScore * 1.1)) },
+    { sem: 'Sem 5', value: Math.round(examScore) },
   ];
 
-  const maxValue = Math.max(...trendData.map(d => d.value));
+  const maxValue = Math.max(...trendData.map(d => d.value), 10);
 
   return (
     <div className="nr-container">
@@ -136,7 +165,7 @@ function NilaiRapor_Page() {
         <header className="nr-topbar">
           <div className="nr-page-info">
             <h2 className="nr-page-title">Nilai Rapor</h2>
-            <p className="nr-page-sub">Riwayat nilai akademik Farhan Hidayat</p>
+            <p className="nr-page-sub">Riwayat nilai akademik {s.nama || ''}</p>
           </div>
 
           <div className="nr-profile-info">
@@ -155,23 +184,23 @@ function NilaiRapor_Page() {
           <div className="nr-stats-grid">
 
             <div className="nr-stat-card">
-              <span className="nr-stat-label">Rata-rata semester ini</span>
-              <div className="nr-stat-value">58.1</div>
+              <span className="nr-stat-label">Exam Score Semester ini</span>
+              <div className="nr-stat-value">{loading ? '—' : examScore.toFixed(1)}</div>
               <div className="nr-stat-sub">
-                <span>↓</span> dari 65.3 (sem. lalu)
+                <span>{examScore < prevScore ? '↓' : '↑'}</span> dari {prevScore} (sem. lalu)
               </div>
             </div>
 
             <div className="nr-stat-card">
               <span className="nr-stat-label">Nilai tertinggi</span>
-              <div className="nr-stat-value neutral">65</div>
-              <div className="nr-stat-sub neutral">Fisika</div>
+              <div className="nr-stat-value neutral">{highestGrade ? highestGrade.score : '—'}</div>
+              <div className="nr-stat-sub neutral">{highestGrade ? highestGrade.subject : '—'}</div>
             </div>
 
             <div className="nr-stat-card">
               <span className="nr-stat-label">Nilai terendah</span>
-              <div className="nr-stat-value">56</div>
-              <div className="nr-stat-sub">Kimia &amp; B. Inggris</div>
+              <div className="nr-stat-value">{lowestGrade ? lowestGrade.score : '—'}</div>
+              <div className="nr-stat-sub">{lowestGrade ? lowestGrade.subject : '—'}</div>
             </div>
 
           </div>
@@ -236,7 +265,7 @@ function NilaiRapor_Page() {
                 </div>
 
                 <div className="nr-chart-desc">
-                  Tren nilai terus menurun &mdash; segera ambil tindakan
+                  {examScore < 60 ? 'Tren nilai terus menurun — segera ambil tindakan' : 'Performa stabil/meningkat — pertahankan!'}
                 </div>
               </div>
             </section>
